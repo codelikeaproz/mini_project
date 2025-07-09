@@ -1,0 +1,113 @@
+@import 'tailwindcss';
+@plugin "daisyui" {
+    themes: corporate --default;
+}
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* MDRRMO Professional Monotone Color System */
+:root {
+    /* Primary Monotone Gray-Green Palette - Professional & Eye-Friendly */
+    --primary-50: #f8faf9;       /* Lightest gray-green */
+    --primary-100: #f1f5f3;      /* Very light gray-green */
+    --primary-200: #e2e8e4;      /* Light gray-green */
+    --primary-300: #cbd5d1;      /* Medium-light gray-green */
+    --primary-400: #9ca8a3;      /* Medium gray-green */
+    --primary-500: #6b7671;      /* Main gray-green (primary) */
+    --primary-600: #556159;      /* Dark gray-green */
+    --primary-700: #424d47;      /* Darker gray-green */
+    --primary-800: #2f3833;      /* Very dark gray-green */
+    --primary-900: #1a201c;      /* Darkest gray-green */
+
+    /* System Colors (minimal, muted tones) */
+    --success: var(--primary-600);     /* Use primary for success */
+    --warning: #8b7355;                /* Muted brown-gray */
+    --info: var(--primary-500);        /* Use primary for info */
+    --danger: #7a5a5a;                 /* Muted red-gray */
+
+    /* Neutral Grays (harmonious with primary) */
+    --gray-50: #fafbfb;
+    --gray-100: #f4f6f5;
+    --gray-200: #e9ece9;
+    --gray-300: #d3d7d3;
+    --gray-400: #a1a6a1;
+    --gray-500: #6f746f;
+    --gray-600: #5c615c;
+    --gray-700: #4a4f4a;
+    --gray-800: #383d38;
+    --gray-900: #262a26;
+
+    /* Typography */
+    --font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* Spacing System */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* Shadows (subtle, monotone) */
+    --shadow-sm: 0 1px 2px 0 rgba(107, 118, 113, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(107, 118, 113, 0.1), 0 2px 4px -2px rgba(107, 118, 113, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(107, 118, 113, 0.1), 0 4px 6px -4px rgba(107, 118, 113, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(107, 118, 113, 0.1), 0 8px 10px -6px rgba(107, 118, 113, 0.05);
+
+    /* Legacy color variables for compatibility - all using monotone palette */
+    --soft-green: var(--primary-500);
+    --soft-green-light: var(--primary-100);
+    --soft-green-dark: var(--primary-700);
+    --white: #ffffff;
+    --red-emergency: var(--danger);
+    --red-light: var(--gray-100);
+}
+
+/* Usage Examples with Monotone Palette */
+.primary-button {
+    background-color: var(--primary-500);
+    color: var(--white);
+}
+
+.primary-button:hover {
+    background-color: var(--primary-600);
+}
+
+.emergency-alert {
+    background-color: var(--gray-100);
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+.success-background {
+    background-color: var(--primary-50);
+    color: var(--primary-800);
+}
+
+/* Base styles with monotone palette */
+body {
+    font-family: var(--font-family);
+    color: var(--gray-700);
+    background-color: var(--gray-50);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-800);
+}
+
+.text-primary { color: var(--primary-600); }
+.bg-primary { background-color: var(--primary-500); }
+.border-primary { border-color: var(--primary-400); }
