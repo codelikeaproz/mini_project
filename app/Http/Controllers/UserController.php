@@ -153,19 +153,31 @@ class UserController extends Controller
             ->with('success', 'MDRRMO user updated successfully!');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         // Prevent deletion of admin users if they're the last admin
         if ($user->role === 'admin') {
             $adminCount = User::where('role', 'admin')->where('is_active', true)->count();
             if ($adminCount <= 1) {
-                return back()->with('error', 'Cannot delete the last active admin user.');
+                $message = 'Cannot delete the last active admin user.';
+
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+
+                return back()->with('error', $message);
             }
         }
 
         // Prevent self-deletion
         if ($user->id === Auth::id()) {
-            return back()->with('error', 'You cannot delete your own account.');
+            $message = 'You cannot delete your own account.';
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
         }
 
         $userName = $user->full_name;
@@ -185,7 +197,75 @@ class UserController extends Controller
 
         $user->delete();
 
-        return back()->with('success', "MDRRMO user '{$userName}' deleted successfully!");
+        $successMessage = "MDRRMO user '{$userName}' deleted successfully!";
+
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $successMessage]);
+        }
+
+        return back()->with('success', $successMessage);
+    }
+
+    public function resendVerification(Request $request, User $user)
+    {
+        // Only admins can resend verification for other users
+        if (!auth()->user()->isAdmin()) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
+            }
+            return back()->with('error', 'Unauthorized action');
+        }
+
+        // Check if user is already verified
+        if ($user->is_verified) {
+            $message = 'User email is already verified';
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
+        try {
+            // Generate new verification token and send email
+            $user->sendEmailVerificationNotification();
+
+            // Log admin activity
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'verification_email_resent',
+                'model_type' => 'App\Models\User',
+                'model_id' => $user->id,
+                'description' => "MDRRMO System: Verification email resent for {$user->full_name} by admin",
+                'new_values' => json_encode([
+                    'target_user_email' => $user->email,
+                    'target_user_name' => $user->full_name,
+                    'admin_action' => 'resend_verification'
+                ]),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ]);
+
+            $successMessage = "Verification email has been resent to {$user->email}";
+
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $successMessage]);
+            }
+
+            return back()->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            $errorMessage = 'Failed to resend verification email: ' . $e->getMessage();
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMessage], 500);
+            }
+
+            return back()->with('error', $errorMessage);
+        }
     }
 
     public function adminProfile()

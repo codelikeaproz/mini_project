@@ -10,10 +10,13 @@ class EnsureEmailIsVerified
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user() ||
-            (! $request->user()->hasVerifiedEmail() &&
+            (! $request->user()->is_verified &&
              ! $request->routeIs('verification.*') &&
              ! $request->routeIs('logout') &&
-             ! $request->routeIs('verify.email'))) {
+             ! $request->routeIs('verify.email') &&
+             ! $request->routeIs('debug-user') &&
+             ! $request->routeIs('debug-user-detailed') &&
+             ! $request->routeIs('debug-role'))) {
             return redirect()->route('verification.notice');
         }
 

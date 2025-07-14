@@ -67,6 +67,7 @@
     --shadow-lg: 0 10px 15px -3px rgba(107, 118, 113, 0.1), 0 4px 6px -4px rgba(107, 118, 113, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(107, 118, 113, 0.1), 0 8px 10px -6px rgba(107, 118, 113, 0.05);
 
+    
     /* Legacy color variables for compatibility - all using monotone palette */
     --soft-green: var(--primary-500);
     --soft-green-light: var(--primary-100);

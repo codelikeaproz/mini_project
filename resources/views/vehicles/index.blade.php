@@ -241,7 +241,7 @@
                             <td>{{ $vehicle->capacity }} persons</td>
                             <td>
                                 @if($vehicle->last_maintenance)
-                                    {{ \Carbon\Carbon::parse($vehicle->last_maintenance)->format('M d, Y') }}
+                                                                            {{ $vehicle->last_maintenance_date ? $vehicle->last_maintenance_date->format('M d, Y') : 'Not scheduled' }}
                                 @else
                                     <span class="text-muted">Not recorded</span>
                                 @endif
@@ -282,6 +282,12 @@
                                                 <i class="fas fa-check-circle me-2"></i>Complete Maintenance
                                             </a></li>
                                             @endif
+                                            @can('admin')
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteVehicle({{ $vehicle->id }}, '{{ $vehicle->vehicle_number }}')">
+                                                <i class="fas fa-trash me-2"></i>Delete Vehicle
+                                            </a></li>
+                                            @endcan
                                         </ul>
                                     </div>
                                 </div>
@@ -320,6 +326,8 @@
 @include('vehicles.partials.maintenance-modal')
 @include('vehicles.partials.complete-maintenance-modal')
 
+<!-- Delete functionality now handled by SweetAlert2 -->
+
 @endsection
 
 @section('scripts')
@@ -350,6 +358,50 @@ function completeMaintenance(vehicleId) {
     const modal = new bootstrap.Modal(document.getElementById('completeMaintenanceModal'));
     document.getElementById('completeMaintenanceVehicleId').value = vehicleId;
     modal.show();
+}
+
+// Delete vehicle function
+function confirmDeleteVehicle(vehicleId, vehicleNumber) {
+    showDeleteConfirmation(
+        'Delete Vehicle',
+        'Are you sure you want to delete this vehicle?',
+        vehicleNumber,
+        'Yes, Delete Vehicle',
+        function() {
+            showLoading('Deleting vehicle...');
+
+            fetch(`/vehicles/${vehicleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeLoading();
+                if (data.success) {
+                    showSuccessToast(data.message || 'Vehicle deleted successfully');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showErrorToast(data.message || 'Delete failed');
+                }
+            })
+            .catch(error => {
+                closeLoading();
+                console.error('Delete error:', error);
+                showErrorToast('Delete failed: ' + error.message);
+            });
+        }
+    );
 }
 
 // AJAX handlers for quick updates

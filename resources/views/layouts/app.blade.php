@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Chart.js (for analytics) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -314,6 +316,206 @@
         // Add fade-in animation to main content
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.main-content').classList.add('fade-in');
+        });
+
+        // ========================================
+        // MDRRMO REUSABLE ALERT SYSTEM
+        // ========================================
+
+        /**
+         * Show success toast notification
+         * @param {string} message - Success message to display
+         * @param {number} timer - Auto-close timer in milliseconds (default: 3000)
+         */
+        function showSuccessToast(message, timer = 3000) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                background: '#f8faf9',
+                color: '#2f3833',
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: 'success',
+                title: message,
+                iconColor: '#556159'
+            });
+        }
+
+        /**
+         * Show error toast notification
+         * @param {string} message - Error message to display
+         * @param {number} timer - Auto-close timer in milliseconds (default: 5000)
+         */
+        function showErrorToast(message, timer = 5000) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                background: '#faf8f8',
+                color: '#2f3833',
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: 'error',
+                title: message,
+                iconColor: '#7a5a5a'
+            });
+        }
+
+        /**
+         * Show warning toast notification
+         * @param {string} message - Warning message to display
+         * @param {number} timer - Auto-close timer in milliseconds (default: 4000)
+         */
+        function showWarningToast(message, timer = 4000) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                background: '#faf9f8',
+                color: '#2f3833',
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: 'warning',
+                title: message,
+                iconColor: '#8b7355'
+            });
+        }
+
+        /**
+         * Show info toast notification
+         * @param {string} message - Info message to display
+         * @param {number} timer - Auto-close timer in milliseconds (default: 3000)
+         */
+        function showInfoToast(message, timer = 3000) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: timer,
+                timerProgressBar: true,
+                background: '#f8faf9',
+                color: '#2f3833',
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: 'info',
+                title: message,
+                iconColor: '#6b7671'
+            });
+        }
+
+        /**
+         * Show reusable delete confirmation dialog
+         * @param {string} title - Dialog title
+         * @param {string} text - Dialog text/description
+         * @param {string} itemName - Name of item being deleted
+         * @param {string} confirmButtonText - Text for confirm button
+         * @param {function} onConfirm - Callback function when confirmed
+         */
+        function showDeleteConfirmation(title, text, itemName, confirmButtonText, onConfirm) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#7a5a5a',
+                cancelButtonColor: '#6b7671',
+                confirmButtonText: confirmButtonText,
+                cancelButtonText: 'Cancel',
+                background: '#fafbfb',
+                color: '#2f3833',
+                customClass: {
+                    popup: 'swal2-popup-mdrrmo',
+                    title: 'swal2-title-mdrrmo',
+                    content: 'swal2-content-mdrrmo'
+                },
+                html: `
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    <p><strong>${text}</strong></p>
+                    <div class="alert alert-info">
+                        <strong>Item to delete:</strong> ${itemName}
+                    </div>
+                `,
+                focusConfirm: false,
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    onConfirm();
+                }
+            });
+        }
+
+        /**
+         * Show loading dialog
+         * @param {string} message - Loading message
+         */
+        function showLoading(message = 'Processing...') {
+            Swal.fire({
+                title: message,
+                allowEscapeKey: false,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                background: '#fafbfb',
+                color: '#2f3833',
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        /**
+         * Close loading dialog
+         */
+        function closeLoading() {
+            Swal.close();
+        }
+
+        // Display Laravel session messages as toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showSuccessToast('{{ session('success') }}');
+            @endif
+
+            @if(session('error'))
+                showErrorToast('{{ session('error') }}');
+            @endif
+
+            @if(session('warning'))
+                showWarningToast('{{ session('warning') }}');
+            @endif
+
+            @if(session('info'))
+                showInfoToast('{{ session('info') }}');
+            @endif
         });
     </script>
 

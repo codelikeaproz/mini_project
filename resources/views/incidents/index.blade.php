@@ -41,7 +41,7 @@
         <div class="col-md-3">
             <div class="card border-0 bg-light">
                 <div class="card-body text-center">
-                    <i class="fas fa-ambulance fa-2x" style="color: var(--primary-500);" mb-2"></i>
+                    <i class="fas fa-ambulance fa-2x mb-2" style="color: var(--primary-500);"></i>
                     <h4 class="mb-1">{{ $stats['responding'] ?? 0 }}</h4>
                     <p class="text-muted mb-0">Responding</p>
                 </div>
@@ -167,7 +167,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark">
-                                            {{ str_replace('_', ' ', title_case($incident->incident_type)) }}
+                                            {{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->incident_type)) }}
                                         </span>
                                     </td>
                                     <td>
@@ -217,6 +217,12 @@
                                                     <i class="fas fa-user-plus"></i>
                                                 </button>
                                             @endif
+                                            @can('admin')
+                                                <button type="button" class="btn btn-outline-danger" title="Delete Incident"
+                                                        onclick="confirmDeleteIncident({{ $incident->id }}, '{{ $incident->incident_number }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -288,6 +294,8 @@
         </div>
     </div>
 </div>
+
+<!-- Delete functionality now handled by SweetAlert2 -->
 @endsection
 
 @push('scripts')
@@ -331,6 +339,49 @@ function confirmAssignment() {
         console.error('Error:', error);
         alert('Assignment failed');
     });
+}
+
+function confirmDeleteIncident(incidentId, incidentNumber) {
+    showDeleteConfirmation(
+        'Delete Incident',
+        'Are you sure you want to delete this incident?',
+        incidentNumber,
+        'Yes, Delete Incident',
+        function() {
+            showLoading('Deleting incident...');
+
+            fetch(`/incidents/${incidentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeLoading();
+                if (data.success) {
+                    showSuccessToast(data.message || 'Incident deleted successfully');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showErrorToast(data.message || 'Delete failed');
+                }
+            })
+            .catch(error => {
+                closeLoading();
+                console.error('Delete error:', error);
+                showErrorToast('Delete failed: ' + error.message);
+            });
+        }
+    );
 }
 </script>
 @endpush

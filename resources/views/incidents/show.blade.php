@@ -6,7 +6,7 @@
     <div class="row align-items-center">
         <div class="col">
             <h1 class="page-title">Incident #{{ $incident->incident_number }}</h1>
-            <p class="page-subtitle">{{ str_replace('_', ' ', title_case($incident->incident_type)) }} - {{ $incident->location }}</p>
+            <p class="page-subtitle">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->incident_type)) }} - {{ $incident->location }}</p>
         </div>
         <div class="col-auto">
             <div class="btn-group" role="group">
@@ -22,6 +22,11 @@
                     <li><a class="dropdown-item" href="#">
                         <i class="fas fa-file-pdf me-2"></i>Export PDF</a></li>
                     <li><hr class="dropdown-divider"></li>
+                    @can('admin')
+                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteIncident()">
+                            <i class="fas fa-trash me-2"></i>Delete Incident</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                    @endcan
                     <li><a class="dropdown-item" href="{{ route('incidents.index') }}">
                         <i class="fas fa-arrow-left me-2"></i>Back to List</a></li>
                 </ul>
@@ -91,7 +96,7 @@
                             <label class="form-label text-muted">Incident Type</label>
                             <p class="mb-0">
                                 <span class="badge bg-light text-dark fs-6">
-                                    {{ str_replace('_', ' ', title_case($incident->incident_type)) }}
+                                                                            {{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->incident_type)) }}
                                 </span>
                             </p>
                         </div>
@@ -172,7 +177,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Road Condition</label>
-                                <p class="mb-0">{{ str_replace('_', ' ', title_case($incident->road_condition ?? 'Not specified')) }}</p>
+                                                                    <p class="mb-0">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->road_condition ?? 'Not specified')) }}</p>
                             </div>
                         </div>
                     </div>
@@ -240,7 +245,7 @@
                                                     @elseif($victim->injury_status == 'critical_condition') bg-warning
                                                     @elseif($victim->injury_status == 'serious_injury') bg-info
                                                     @else bg-success @endif">
-                                                    {{ str_replace('_', ' ', title_case($victim->injury_status)) }}
+                                                    {{ \Illuminate\Support\Str::title(str_replace('_', ' ', $victim->injury_status)) }}
                                                 </span>
                                             </div>
                                             <div class="btn-group btn-group-sm">
@@ -443,6 +448,8 @@
         </div>
     </div>
 </div>
+
+<!-- Delete functionality now handled by SweetAlert2 -->
 @endsection
 
 @push('styles')
@@ -539,21 +546,76 @@ function addVictim() {
 
 function editVictim(victimId) {
     // Load victim data and populate form
-    // Implementation would fetch victim data and populate the form
-    document.querySelector('#victimModal .modal-title').textContent = 'Edit Person';
-    const modal = new bootstrap.Modal(document.getElementById('victimModal'));
-    modal.show();
+    fetch(`/victims/${victimId}/data`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const victim = data.victim;
+
+            // Populate form fields
+            document.getElementById('victimId').value = victim.id;
+            document.getElementById('first_name').value = victim.first_name || '';
+            document.getElementById('last_name').value = victim.last_name || '';
+            document.getElementById('age').value = victim.age || '';
+            document.getElementById('gender').value = victim.gender || '';
+            document.getElementById('contact_number').value = victim.contact_number || '';
+            document.getElementById('address').value = victim.address || '';
+            document.getElementById('involvement_type').value = victim.involvement_type || '';
+            document.getElementById('injury_status').value = victim.injury_status || '';
+            document.getElementById('hospital_referred').value = victim.hospital_referred || '';
+            document.getElementById('transport_method').value = victim.transport_method || '';
+            document.getElementById('medical_notes').value = victim.medical_notes || '';
+
+            document.querySelector('#victimModal .modal-title').textContent = 'Edit Person';
+            const modal = new bootstrap.Modal(document.getElementById('victimModal'));
+            modal.show();
+        } else {
+            showAlert('danger', 'Failed to load person data');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Failed to load person data');
+    });
 }
 
 function saveVictim() {
+    // Validate required fields first
+    const requiredFields = ['first_name', 'last_name', 'address', 'involvement_type', 'injury_status'];
+    let isValid = true;
+    let errorMessage = '';
+
+    requiredFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element || !element.value.trim()) {
+            isValid = false;
+            const label = element.previousElementSibling.textContent.replace(' *', '');
+            errorMessage += `${label} is required. `;
+            element.classList.add('is-invalid');
+        } else {
+            element.classList.remove('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        showAlert('danger', errorMessage.trim());
+        return;
+    }
+
     const formData = new FormData();
     const fields = ['first_name', 'last_name', 'age', 'gender', 'contact_number', 'address',
                    'involvement_type', 'injury_status', 'hospital_referred', 'transport_method', 'medical_notes'];
 
+    // Add all fields, including empty ones (Laravel validation will handle required fields)
     fields.forEach(field => {
         const element = document.getElementById(field);
-        if (element && element.value) {
-            formData.append(field, element.value);
+        if (element) {
+            formData.append(field, element.value || '');
         }
     });
 
@@ -563,52 +625,193 @@ function saveVictim() {
     const url = victimId ? `/victims/${victimId}` : '/victims';
     const method = victimId ? 'PUT' : 'POST';
 
+    // Add method spoofing for PUT requests
+    if (method === 'PUT') {
+        formData.append('_method', 'PUT');
+    }
+
+    // Show loading state
+    const saveButton = document.querySelector('#victimModal .btn-primary');
+    const originalText = saveButton.textContent;
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+
     fetch(url, {
-        method: method,
+        method: 'POST', // Always use POST with method spoofing for PUT
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest' // This helps Laravel detect AJAX requests
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        // Handle validation errors (422)
+        if (response.status === 422) {
+            return response.json().then(data => {
+                throw new ValidationError(data.message || 'Validation failed', data.errors || {});
+            });
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Success response:', data);
         if (data.success) {
-            location.reload();
+            showSuccessToast(data.message || 'Person saved successfully');
+            // Close modal and reload page
+            const modal = bootstrap.Modal.getInstance(document.getElementById('victimModal'));
+            if (modal) {
+                modal.hide();
+            }
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         } else {
-            showAlert('danger', data.message || 'Save failed');
+            console.error('Server returned success:false', data);
+            showErrorToast(data.message || 'Save failed');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', 'Save failed');
+        console.error('Fetch error:', error);
+        if (error instanceof ValidationError) {
+            showErrorToast(`Validation Error: ${error.message}`);
+            // Highlight validation errors
+            Object.keys(error.errors).forEach(field => {
+                const element = document.getElementById(field);
+                if (element) {
+                    element.classList.add('is-invalid');
+                }
+            });
+        } else {
+            showErrorToast('Save failed. Please check your connection and try again.');
+        }
+    })
+    .finally(() => {
+        // Reset button state
+        saveButton.textContent = originalText;
+        saveButton.disabled = false;
     });
 }
 
-function removeVictim(victimId) {
-    if (confirm('Are you sure you want to remove this person from the incident?')) {
-        fetch(`/victims/${victimId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                showAlert('danger', data.message || 'Remove failed');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('danger', 'Remove failed');
-        });
+// Custom validation error class
+class ValidationError extends Error {
+    constructor(message, errors) {
+        super(message);
+        this.name = 'ValidationError';
+        this.errors = errors;
     }
+}
+
+function removeVictim(victimId) {
+    // Get victim name from the DOM
+    const victimElement = document.querySelector(`button[onclick="removeVictim(${victimId})"]`).closest('.card-body');
+    const victimName = victimElement.querySelector('h6').textContent.trim();
+
+    showDeleteConfirmation(
+        'Remove Person',
+        'Are you sure you want to remove this person from the incident?',
+        victimName,
+        'Yes, Remove Person',
+        function() {
+            showLoading('Removing person...');
+            console.log('Attempting to delete victim ID:', victimId);
+
+            fetch(`/victims/${victimId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Delete response status:', response.status);
+
+                if (response.status === 422) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Validation failed');
+                    });
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return response.json();
+            })
+            .then(data => {
+                closeLoading();
+                console.log('Delete response data:', data);
+                if (data.success) {
+                    showSuccessToast(data.message || 'Person removed successfully');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.error('Server returned success:false for delete', data);
+                    showErrorToast(data.message || 'Remove failed');
+                }
+            })
+            .catch(error => {
+                closeLoading();
+                console.error('Delete error:', error);
+                showErrorToast('Remove failed: ' + error.message);
+            });
+        }
+    );
 }
 
 function printIncident() {
     window.print();
+}
+
+function confirmDeleteIncident() {
+    showDeleteConfirmation(
+        'Delete Incident',
+        'Are you sure you want to delete this incident?',
+        '{{ $incident->incident_number }}',
+        'Yes, Delete Incident',
+        function() {
+            showLoading('Deleting incident...');
+
+            fetch(`/incidents/{{ $incident->id }}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeLoading();
+                if (data.success) {
+                    showSuccessToast(data.message || 'Incident deleted successfully');
+                    setTimeout(() => {
+                        window.location.href = '/incidents';
+                    }, 1500);
+                } else {
+                    showErrorToast(data.message || 'Delete failed');
+                }
+            })
+            .catch(error => {
+                closeLoading();
+                console.error('Delete error:', error);
+                showErrorToast('Delete failed: ' + error.message);
+            });
+        }
+    );
 }
 
 function showAlert(type, message) {
@@ -630,3 +833,4 @@ function showAlert(type, message) {
 }
 </script>
 @endpush
+

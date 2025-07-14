@@ -69,9 +69,35 @@
             background-color: #22c55e;
             border-color: #22c55e;
         }
-        .countdown {
+        .countdown-timer {
             font-weight: bold;
-            color: #dc2626;
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            display: inline-block;
+            min-width: 120px;
+        }
+        .countdown-timer.warning {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+        .countdown-timer.expired {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+        .timer-container {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .timer-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
         }
     </style>
 </head>
@@ -112,12 +138,19 @@
                         We've sent a 6-digit verification code to:<br>
                         <strong>{{ $email }}</strong>
                     </p>
-                    <p class="text-muted small">
-                        <i class="fas fa-clock me-1"></i>Code expires in 10 minutes
-                    </p>
+
+                    <!-- Countdown Timer -->
+                    <div class="timer-container">
+                        <div class="timer-label">
+                            <i class="fas fa-clock me-1"></i>Code expires in:
+                        </div>
+                        <div id="countdown-timer" class="countdown-timer">
+                            <span id="timer-display">10:00</span>
+                        </div>
+                    </div>
                 </div>
 
-                <form method="POST" action="{{ route('2fa.verify') }}">
+                <form method="POST" action="{{ route('2fa.verify') }}" id="verify-form">
                     @csrf
                     <input type="hidden" name="email" value="{{ $email }}">
 
@@ -139,18 +172,18 @@
                         @enderror
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100 mb-3">
+                    <button type="submit" class="btn btn-success w-100 mb-3" id="verify-button">
                         <i class="fas fa-check me-2"></i>Verify and Login
                     </button>
                 </form>
 
                 <!-- Resend Code Form -->
-                <form method="POST" action="{{ route('2fa.resend') }}" class="text-center">
+                <form method="POST" action="{{ route('2fa.resend') }}" class="text-center" id="resend-form">
                     @csrf
                     <input type="hidden" name="email" value="{{ $email }}">
 
                     <p class="mb-2">Didn't receive the code?</p>
-                    <button type="submit" class="btn btn-outline-success">
+                    <button type="submit" class="btn btn-outline-success" id="resend-button">
                         <i class="fas fa-redo me-2"></i>Resend Code
                     </button>
                 </form>
@@ -168,19 +201,120 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Countdown Timer Configuration
+        let countdownDuration = 10 * 60; // 10 minutes in seconds
+        let countdownInterval;
+
+        // Get elements
+        const timerDisplay = document.getElementById('timer-display');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const verifyForm = document.getElementById('verify-form');
+        const verifyButton = document.getElementById('verify-button');
+        const resendForm = document.getElementById('resend-form');
+        const resendButton = document.getElementById('resend-button');
+        const codeInput = document.getElementById('two_factor_code');
+
+        // Format time display
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update countdown display
+        function updateCountdown() {
+            timerDisplay.textContent = formatTime(countdownDuration);
+
+            // Change appearance based on remaining time
+            if (countdownDuration <= 0) {
+                // Timer expired
+                countdownTimer.className = 'countdown-timer expired';
+                timerDisplay.innerHTML = '<i class="fas fa-times me-1"></i>EXPIRED';
+
+                // Disable form
+                verifyForm.style.opacity = '0.5';
+                verifyButton.disabled = true;
+                verifyButton.innerHTML = '<i class="fas fa-times me-2"></i>Code Expired';
+                codeInput.disabled = true;
+
+                // Show resend option
+                resendForm.style.display = 'block';
+
+                clearInterval(countdownInterval);
+                return;
+            } else if (countdownDuration <= 60) {
+                // Warning state (last minute)
+                countdownTimer.className = 'countdown-timer warning';
+            } else if (countdownDuration <= 180) {
+                // Caution state (last 3 minutes)
+                countdownTimer.className = 'countdown-timer warning';
+            }
+
+            countdownDuration--;
+        }
+
+        // Start countdown
+        function startCountdown() {
+            updateCountdown(); // Initial call
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // Reset countdown (for resend)
+        function resetCountdown() {
+            clearInterval(countdownInterval);
+            countdownDuration = 10 * 60; // Reset to 10 minutes
+
+            // Reset form state
+            verifyForm.style.opacity = '1';
+            verifyButton.disabled = false;
+            verifyButton.innerHTML = '<i class="fas fa-check me-2"></i>Verify and Login';
+            codeInput.disabled = false;
+            countdownTimer.className = 'countdown-timer';
+
+            // Clear input
+            codeInput.value = '';
+            codeInput.focus();
+
+            startCountdown();
+        }
+
+        // Handle resend form submission
+        resendForm.addEventListener('submit', function(e) {
+            // Show loading state
+            resendButton.disabled = true;
+            resendButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+
+            // Note: The form will submit normally, and on page reload, countdown will restart
+        });
+
         // Auto-format verification code input
-        document.getElementById('two_factor_code').addEventListener('input', function(e) {
+        codeInput.addEventListener('input', function(e) {
             // Only allow numbers
             this.value = this.value.replace(/[^0-9]/g, '');
 
-            // Auto-submit when 6 digits are entered
-            if (this.value.length === 6) {
-                this.form.submit();
+            // Auto-submit when 6 digits are entered (only if timer hasn't expired)
+            if (this.value.length === 6 && countdownDuration > 0) {
+                verifyForm.submit();
             }
         });
 
         // Auto-focus on verification code input
-        document.getElementById('two_factor_code').focus();
+        codeInput.focus();
+
+        // Start the countdown timer
+        startCountdown();
+
+        // Handle page visibility change (pause/resume timer when tab is hidden/visible)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearInterval(countdownInterval);
+            } else {
+                // Resume countdown if not expired
+                if (countdownDuration > 0) {
+                    countdownInterval = setInterval(updateCountdown, 1000);
+                }
+            }
+        });
     </script>
 </body>
 </html>

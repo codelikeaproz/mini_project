@@ -58,9 +58,9 @@
                             <i class="fas fa-chart-bar me-1"></i>Analytics
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">
+                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                            <li><a class="dropdown-item" href="#">
+                            <li><a class="dropdown-item" href="{{ route('heat-map.index') }}">
                                 <i class="fas fa-map-marked-alt me-2"></i>Heat Map</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#">

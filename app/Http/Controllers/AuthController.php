@@ -10,31 +10,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\PasswordReset;
 
 class AuthController extends Controller
 {
+    // ========================================
+    // LOGIN & LOGOUT METHODS
+    // ========================================
+
     public function showLogin()
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
         return view('auth.login');
-    }
-
-    public function showRegister()
-    {
-        // Only allow admin users to access registration
-        if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'You must be logged in as an admin to register new MDRRMO staff.');
-        }
-
-        if (!Auth::user()->isAdmin()) {
-            abort(403, 'Only administrators can register new MDRRMO staff members.');
-        }
-
-        return view('auth.register');
     }
 
     public function login(Request $request)
@@ -113,6 +105,43 @@ class AuthController extends Controller
         ]);
     }
 
+    public function logout(Request $request)
+    {
+        $user = Auth::user();
+
+        // Log logout activity
+        if ($user) {
+            $this->logActivity('logout', $user, [
+                'logout_method' => 'manual',
+                'municipality' => $user->municipality
+            ]);
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login')->with('success', 'You have been logged out from MDRRMO system.');
+    }
+
+    // ========================================
+    // REGISTRATION METHODS (Admin Only)
+    // ========================================
+
+    public function showRegister()
+    {
+        // Only allow admin users to access registration
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'You must be logged in as an admin to register new MDRRMO staff.');
+        }
+
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Only administrators can register new MDRRMO staff members.');
+        }
+
+        return view('auth.register');
+    }
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -148,42 +177,207 @@ class AuthController extends Controller
             'position' => $user->position
         ]);
 
-                return redirect()->route('users.index')->with('success',
+        return redirect()->route('users.index')->with('success',
             "MDRRMO staff '{$user->full_name}' registered successfully! Verification email sent to {$user->email}."
         );
     }
 
-    public function logout(Request $request)
-    {
-        $user = Auth::user();
+    // ========================================
+    // TWO-FACTOR AUTHENTICATION METHODS
+    // ========================================
 
-        // Log logout activity
-        if ($user) {
-            $this->logActivity('logout', $user, [
-                'logout_method' => 'manual',
-                'municipality' => $user->municipality
+    public function showTwoFactorForm()
+    {
+        $email = session('2fa_email');
+
+        if (!$email) {
+            return redirect()->route('login')->with('error', 'Session expired. Please login again to MDRRMO system.');
+        }
+
+        // Check if 2FA session hasn't expired (30 minutes)
+        $timestamp = session('2fa_timestamp');
+        if ($timestamp && (now()->timestamp - $timestamp) > 1800) {
+            session()->forget(['2fa_email', '2fa_timestamp']);
+            return redirect()->route('login')->with('error', 'Session expired. Please login again to MDRRMO system.');
+        }
+
+        return view('auth.two-factor')->with('email', $email);
+    }
+
+    public function verifyTwoFactor(Request $request)
+    {
+        $request->validate([
+            'two_factor_code' => 'required|digits:6',
+        ]);
+
+        $email = $request->email ?? session('2fa_email');
+
+        if (!$email) {
+            return redirect()->route('login')->with('error', 'Session expired. Please login again to MDRRMO system.');
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return back()->withErrors(['two_factor_code' => 'Invalid user session.']);
+        }
+
+        if ($user->isTwoFactorCodeValid($request->two_factor_code)) {
+            // Login user
+            Auth::login($user);
+
+            // Clear 2FA code and session data
+            $user->clearTwoFactorCode();
+            session()->forget(['2fa_email', '2fa_timestamp']);
+
+            // Log successful login
+            $this->logAttempt($user->email, true, [
+                'login_method' => 'email_password_2fa',
+                'municipality' => $user->municipality,
+                'role' => $user->role
             ]);
+
+            // Log activity
+            $this->logActivity('2fa_verified_login', $user, ['verification_method' => 'email_otp']);
+
+            $welcomeMessage = $user->isAdmin()
+                ? "Welcome back, Administrator {$user->full_name}!"
+                : "Welcome back, {$user->full_name} - {$user->municipality} MDRRMO!";
+
+            return redirect('/dashboard')->with('login_success', $welcomeMessage);
         }
 
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/login')->with('success', 'You have been logged out from MDRRMO system.');
+        return back()->withErrors(['two_factor_code' => 'Invalid or expired OTP code.']);
     }
 
-    public function dashboard()
+    public function resendTwoFactorCode(Request $request)
     {
-        $user = Auth::user();
+        $email = $request->email ?? session('2fa_email');
 
-        if ($user->isAdmin()) {
-            return view('admin.dashboard', compact('user'));
+        if (!$email) {
+            return redirect()->route('login')->with('error', 'Session expired. Please login again to MDRRMO system.');
         }
 
-        return view('user.dashboard', compact('user'));
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            $user->generateTwoFactorCode();
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user));
+
+            // Refresh session timestamp
+            session(['2fa_timestamp' => now()->timestamp]);
+
+            // Log resend activity
+            $this->logActivity('2fa_code_resent', $user);
+
+            return back()->with('success', 'A new 2FA code has been sent to your email.');
+        }
+
+        return back()->withErrors(['email' => 'User not found.']);
     }
 
-    // Helper methods
+    // ========================================
+    // EMAIL VERIFICATION METHODS
+    // ========================================
+
+    public function verifyEmail($token)
+    {
+        $user = User::where('verification_token', $token)->first();
+
+        if (!$user) {
+            return redirect('/login')->with('error', 'Invalid verification token.');
+        }
+
+        if ($user->is_verified) {
+            return redirect('/login')->with('info', 'Email already verified. You can now log in to the MDRRMO system.');
+        }
+
+        $user->update([
+            'is_verified' => true,
+            'email_verified_at' => now(),
+            'verification_token' => null,
+        ]);
+
+        // Log email verification
+        $this->logActivity('email_verified', $user);
+
+        return redirect('/login')
+            ->with('success', 'Email verified successfully! You can now log in to the MDRRMO system.')
+            ->with('verified_email', $user->email);
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && !$user->is_verified) {
+            $user->notify(new EmailVerificationNotification($user));
+            return back()->with('success', 'Verification email resent!');
+        }
+
+        return back()->with('error', 'Unable to resend verification email.');
+    }
+
+    // ========================================
+    // PASSWORD RESET METHODS
+    // ========================================
+
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLink(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = Password::sendResetLink($request->only('email'));
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    }
+
+    public function showResetForm($token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                // Log password reset
+                $this->logActivity('password_reset', $user);
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
+    }
+
+    // ========================================
+    // HELPER METHODS
+    // ========================================
+
     private function logAttempt($email, $successful, $details = [])
     {
         LoginAttempt::create([
@@ -201,11 +395,10 @@ class AuthController extends Controller
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => $action,
-            'model_type' => 'Authentication',
+            'model_type' => 'App\Models\User',
             'model_id' => $user->id,
-            'description' => "MDRRMO System: {$action} for {$user->full_name}",
-            'old_values' => null,
-            'new_values' => json_encode($details),
+            'description' => "MDRRMO System: {$action} for {$user->full_name} ({$user->municipality})",
+            'new_values' => $details,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ]);

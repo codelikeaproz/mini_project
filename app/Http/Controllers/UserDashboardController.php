@@ -11,7 +11,8 @@ class UserDashboardController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'verified', 'role:admin,mdrrmo_staff']);
+        // Remove role middleware - let routes handle access control
+        $this->middleware(['auth', 'verified']);
     }
 
     public function dashboard()

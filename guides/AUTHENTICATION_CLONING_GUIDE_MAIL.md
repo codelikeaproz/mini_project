@@ -283,6 +283,9 @@ trait LogsActivity
         } catch (\Exception $e) {
             Log::error("Failed to log authentication activity: " . $e->getMessage());
             return null;
+
+
+            
         }
     }
 }

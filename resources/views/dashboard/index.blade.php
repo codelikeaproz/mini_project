@@ -248,7 +248,7 @@
                                         <tr>
                                             <td><strong>{{ $incident->incident_number }}</strong></td>
                                             <td>
-                                                <small>{{ str_replace('_', ' ', title_case($incident->incident_type)) }}</small>
+                                                <small>{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->incident_type)) }}</small>
                                             </td>
                                             <td>
                                                 <div>
@@ -257,7 +257,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <small>{{ $incident->incident_datetime->format('M d, H:i') }}</small>
+                                                <small>{{ $incident->incident_datetime ? $incident->incident_datetime->format('M d, H:i') : 'N/A' }}</small>
                                             </td>
                                             <td>
                                                 <span class="badge status-{{ $incident->status }}">
@@ -299,7 +299,7 @@
                                         <h6 class="mb-1">{{ $incident->incident_number }}</h6>
                                         <p class="mb-1 text-muted small">{{ Str::limit($incident->location, 30) }}</p>
                                         <small class="text-warning">
-                                            <i class="fas fa-clock me-1"></i>{{ $incident->incident_datetime->diffForHumans() }}
+                                            <i class="fas fa-clock me-1"></i>{{ $incident->incident_datetime ? $incident->incident_datetime->diffForHumans() : 'Unknown time' }}
                                         </small>
                                     </div>
                                     <a href="{{ route('incidents.show', $incident) }}" class="btn btn-outline-primary btn-sm">
@@ -337,7 +337,7 @@
                         <a href="{{ route('incidents.index') }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-list me-2"></i>View All Incidents
                         </a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm">
+                        <a href="{{ route('heat-map.index') }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-map-marked-alt me-2"></i>View Heat Map
                         </a>
                     </div>

@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Incident;
 use App\Models\Vehicle;
 use App\Models\User;
 use App\Models\Victim;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 final class DashboardController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'verified', 'role:admin,mdrrmo_staff']);
+        // Remove global middleware - let routes handle role-based access
+        $this->middleware(['auth', 'verified']);
     }
 
     /**
@@ -134,7 +137,7 @@ final class DashboardController extends Controller
         $data = [];
 
         foreach ($incidents as $incident) {
-            $labels[] = str_replace('_', ' ', title_case($incident->incident_type));
+            $labels[] = Str::title(str_replace('_', ' ', $incident->incident_type));
             $data[] = $incident->count;
         }
 
@@ -179,10 +182,21 @@ final class DashboardController extends Controller
         $vehicleStats = $this->getVehicleStats();
 
         // Admin-specific data
-        $recentUsers = User::where('role', 'mdrrmo_staff')
+        $recentActivities = User::where('role', 'mdrrmo_staff')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
+
+        // Chart data for the new format
+        $chartData = [
+            'months' => $monthlyData['labels'],
+            'incidents' => $monthlyData['data']
+        ];
+
+        $typeChartData = [
+            'labels' => $typeDistribution['labels'],
+            'data' => $typeDistribution['data']
+        ];
 
         $systemActivity = [
             'total_logins_today' => 0, // Would be implemented with login tracking
@@ -192,10 +206,10 @@ final class DashboardController extends Controller
         return view('dashboard.admin', compact(
             'stats',
             'recentIncidents',
-            'monthlyData',
-            'typeDistribution',
+            'chartData',
+            'typeChartData',
             'vehicleStats',
-            'recentUsers',
+            'recentActivities',
             'systemActivity'
         ));
     }
@@ -214,6 +228,24 @@ final class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // Get pending incidents for immediate attention
+        $pendingIncidents = Incident::where('status', 'pending')
+            ->with(['reportedBy', 'assignedStaff'])
+            ->orderBy('incident_datetime', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Statistics for the cards
+        $todayIncidents = Incident::whereDate('incident_datetime', now())->count();
+        $resolvedToday = Incident::whereDate('incident_datetime', now())
+            ->where('status', 'resolved')
+            ->count();
+        $availableVehicles = Vehicle::where('status', 'available')->count();
+        $maintenanceVehicles = Vehicle::where('status', 'maintenance')->count();
+        $myAssignments = Incident::where('assigned_staff', $user->id)
+            ->whereIn('status', ['pending', 'responding'])
+            ->count();
+
         $myStats = [
             'total_assigned' => Incident::where('assigned_staff', $user->id)->count(),
             'pending_assigned' => Incident::where('assigned_staff', $user->id)->where('status', 'pending')->count(),
@@ -224,16 +256,35 @@ final class DashboardController extends Controller
         // Get overall system stats (limited view)
         $systemStats = [
             'total_incidents' => Incident::count(),
-            'incidents_today' => Incident::whereDate('incident_datetime', Carbon::today())->count(),
+            'incidents_today' => $todayIncidents,
             'pending_incidents' => Incident::where('status', 'pending')->count(),
-            'available_vehicles' => Vehicle::where('status', 'available')->count(),
+            'available_vehicles' => $availableVehicles,
         ];
 
-        return view('dashboard.user', compact(
+        // Get recent activity for this user
+        $recentActivity = ActivityLog::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Add missing variables for the view
+        $deployedVehicles = Vehicle::where('status', 'deployed')->count();
+        $outOfServiceVehicles = Vehicle::where('status', 'out_of_service')->count();
+
+        return view('dashboard.staff', compact(
             'user',
             'myIncidents',
             'myStats',
-            'systemStats'
+            'systemStats',
+            'pendingIncidents',
+            'todayIncidents',
+            'resolvedToday',
+            'availableVehicles',
+            'maintenanceVehicles',
+            'myAssignments',
+            'recentActivity',
+            'deployedVehicles',
+            'outOfServiceVehicles'
         ));
     }
 
