@@ -8,6 +8,7 @@ use App\Models\Victim;
 use App\Models\Incident;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,11 +30,24 @@ class VictimController extends Controller
     /**
      * Display a listing of all victims
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $victims = Victim::with(['incident'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $query = Victim::with(['incident']);
+
+        // Add filtering capabilities
+        if ($request->filled('incident_id')) {
+            $query->where('incident_id', $request->incident_id);
+        }
+
+        if ($request->filled('injury_status')) {
+            $query->where('injury_status', $request->injury_status);
+        }
+
+        if ($request->filled('involvement_type')) {
+            $query->where('involvement_type', $request->involvement_type);
+        }
+
+        $victims = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return view('victims.index', compact('victims'));
     }
@@ -52,6 +66,7 @@ class VictimController extends Controller
 
         $incidents = Incident::select('id', 'incident_type', 'location', 'created_at')
             ->orderBy('created_at', 'desc')
+            ->limit(50) // Limit for performance
             ->get();
 
         return view('victims.create', compact('incidents', 'incident'));
@@ -60,29 +75,9 @@ class VictimController extends Controller
     /**
      * Store a newly created victim in storage
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'incident_id' => 'required|exists:incidents,id',
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'age' => 'nullable|integer|min:0|max:150',
-            'gender' => 'nullable|in:male,female,other',
-            'contact_number' => 'nullable|string|max:20',
-            'address' => 'required|string',
-            'involvement_type' => 'required|in:driver,passenger,pedestrian,witness,patient,expectant_mother,victim,property_owner,other',
-            'injury_status' => 'required|in:none,minor_injury,serious_injury,critical_condition,in_labor,gunshot_wound,stab_wound,fatal',
-            'hospital_referred' => 'nullable|string|max:255',
-            'hospital_arrival_time' => 'nullable|date',
-            'medical_notes' => 'nullable|string',
-            'transport_method' => 'nullable|in:ambulance,private_vehicle,motorcycle,helicopter,walk_in',
-            'vehicle_type' => 'nullable|string|max:50',
-            'vehicle_plate_number' => 'nullable|string|max:20',
-            'wearing_helmet' => 'nullable|boolean',
-            'wearing_seatbelt' => 'nullable|boolean',
-            'license_status' => 'nullable|in:valid,expired,no_license,unknown',
-            'emergency_contacts' => 'nullable|array'
-        ]);
+        $validated = $this->validateVictimData($request);
 
         try {
             DB::beginTransaction();
@@ -99,7 +94,7 @@ class VictimController extends Controller
             DB::commit();
 
             // Return JSON response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Person has been added successfully.',
@@ -116,7 +111,7 @@ class VictimController extends Controller
             Log::error('Error creating victim', ['error' => $e->getMessage()]);
 
             // Return JSON error response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to record person information. Please try again.'
@@ -148,6 +143,7 @@ class VictimController extends Controller
 
         $incidents = Incident::select('id', 'incident_type', 'location', 'created_at')
             ->orderBy('created_at', 'desc')
+            ->limit(50) // Limit for performance
             ->get();
 
         return view('victims.edit', compact('victim', 'incidents'));
@@ -156,29 +152,9 @@ class VictimController extends Controller
     /**
      * Update the specified victim in storage
      */
-    public function update(Request $request, Victim $victim)
+    public function update(Request $request, Victim $victim): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'incident_id' => 'required|exists:incidents,id',
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'age' => 'nullable|integer|min:0|max:150',
-            'gender' => 'nullable|in:male,female,other',
-            'contact_number' => 'nullable|string|max:20',
-            'address' => 'required|string',
-            'involvement_type' => 'required|in:driver,passenger,pedestrian,witness,patient,expectant_mother,victim,property_owner,other',
-            'injury_status' => 'required|in:none,minor_injury,serious_injury,critical_condition,in_labor,gunshot_wound,stab_wound,fatal',
-            'hospital_referred' => 'nullable|string|max:255',
-            'hospital_arrival_time' => 'nullable|date',
-            'medical_notes' => 'nullable|string',
-            'transport_method' => 'nullable|in:ambulance,private_vehicle,motorcycle,helicopter,walk_in',
-            'vehicle_type' => 'nullable|string|max:50',
-            'vehicle_plate_number' => 'nullable|string|max:20',
-            'wearing_helmet' => 'nullable|boolean',
-            'wearing_seatbelt' => 'nullable|boolean',
-            'license_status' => 'nullable|in:valid,expired,no_license,unknown',
-            'emergency_contacts' => 'nullable|array'
-        ]);
+        $validated = $this->validateVictimData($request);
 
         try {
             DB::beginTransaction();
@@ -195,7 +171,7 @@ class VictimController extends Controller
             DB::commit();
 
             // Return JSON response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Person information has been updated successfully.',
@@ -212,7 +188,7 @@ class VictimController extends Controller
             Log::error('Error updating victim', ['error' => $e->getMessage()]);
 
             // Return JSON error response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to update person information. Please try again.'
@@ -228,7 +204,7 @@ class VictimController extends Controller
     /**
      * Remove the specified victim from storage
      */
-    public function destroy(Request $request, Victim $victim)
+    public function destroy(Request $request, Victim $victim): RedirectResponse|JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -247,7 +223,7 @@ class VictimController extends Controller
             DB::commit();
 
             // Return JSON response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Person has been removed successfully.'
@@ -263,7 +239,7 @@ class VictimController extends Controller
             Log::error('Error deleting victim', ['error' => $e->getMessage()]);
 
             // Return JSON error response for AJAX requests
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to remove person. Please try again.'
@@ -278,26 +254,77 @@ class VictimController extends Controller
     /**
      * Get victims for a specific incident (AJAX)
      */
-    public function getByIncident(Request $request, Incident $incident)
+    public function getByIncident(Request $request, Incident $incident): JsonResponse
     {
         $victims = $incident->victims()
-            ->select('id', 'first_name', 'last_name', 'age', 'gender', 'injury_status', 'involvement_type')
+            ->select('id', 'first_name', 'last_name', 'age', 'gender', 'injury_status', 'involvement_type', 'hospital_referred')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
             'success' => true,
-            'victims' => $victims
+            'victims' => $victims,
+            'count' => $victims->count()
         ]);
     }
 
     /**
      * Get a specific victim data for editing (AJAX)
      */
-    public function getVictim(Request $request, Victim $victim)
+    public function getVictim(Request $request, Victim $victim): JsonResponse
     {
         return response()->json([
             'success' => true,
             'victim' => $victim
+        ]);
+    }
+
+    /**
+     * Get victim statistics for dashboard
+     */
+    public function getStatistics(): JsonResponse
+    {
+        $stats = [
+            'total' => Victim::count(),
+            'by_injury_status' => Victim::select('injury_status', DB::raw('count(*) as count'))
+                ->groupBy('injury_status')
+                ->pluck('count', 'injury_status'),
+            'by_involvement_type' => Victim::select('involvement_type', DB::raw('count(*) as count'))
+                ->groupBy('involvement_type')
+                ->pluck('count', 'involvement_type'),
+            'recent_critical' => Victim::where('injury_status', 'critical_condition')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->count()
+        ];
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Validate victim data - DRY principle
+     */
+    private function validateVictimData(Request $request): array
+    {
+        return $request->validate([
+            'incident_id' => 'required|exists:incidents,id',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'age' => 'nullable|integer|min:0|max:150',
+            'gender' => 'nullable|in:male,female,other',
+            'contact_number' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'involvement_type' => 'required|in:driver,passenger,pedestrian,witness,patient,expectant_mother,victim,property_owner,other',
+            'injury_status' => 'required|in:none,minor_injury,serious_injury,critical_condition,in_labor,gunshot_wound,stab_wound,fatal',
+            'hospital_referred' => 'nullable|string|max:255',
+            'hospital_arrival_time' => 'nullable|date',
+            'medical_notes' => 'nullable|string|max:1000',
+            'transport_method' => 'nullable|in:ambulance,private_vehicle,motorcycle,helicopter,walk_in',
+            'vehicle_type' => 'nullable|string|max:50',
+            'vehicle_plate_number' => 'nullable|string|max:20',
+            'wearing_helmet' => 'nullable|boolean',
+            'wearing_seatbelt' => 'nullable|boolean',
+            'license_status' => 'nullable|in:valid,expired,no_license,unknown',
+            'emergency_contacts' => 'nullable|array'
         ]);
     }
 }

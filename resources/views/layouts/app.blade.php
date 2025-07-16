@@ -1,226 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="mdrrmo">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MDRRMO Maramag - Accident Reporting System')</title>
 
-    <!-- Bootstrap CSS -->
+            <!-- Keep Bootstrap CSS for existing views compatibility -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Vite Assets (Tailwind + DaisyUI) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- CSS fixes for Bootstrap + DaisyUI compatibility -->
+    <style>
+        /* Fix navbar positioning issues */
+        body {
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .navbar {
+            position: relative !important;
+            z-index: 1030;
+            margin-bottom: 0;
+        }
+
+        /* Ensure content doesn't overlap with navbar */
+        .main-content {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        /* Ensure DaisyUI badges work in victim management */
+        .victim-management .badge {
+            /* Reset Bootstrap badge styles for this section */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* DaisyUI badge colors */
+        .victim-management .badge-neutral { background-color: #6b7280; color: white; }
+        .victim-management .badge-success { background-color: #22c55e; color: white; }
+        .victim-management .badge-warning { background-color: #f59e0b; color: white; }
+        .victim-management .badge-error { background-color: #ef4444; color: white; }
+        .victim-management .badge-info { background-color: #3b82f6; color: white; }
+        .victim-management .badge-ghost { background-color: #f3f4f6; color: #374151; }
+
+        /* DaisyUI navbar and dropdowns work automatically */
+        .navbar {
+            z-index: 9999 !important;
+            position: relative !important;
+        }
+
+        /* Ensure DaisyUI dropdowns have proper z-index */
+        .dropdown-content {
+            z-index: 10000 !important;
+        }
+
+        /* Fix map container z-index to not interfere with navbar */
+        .map-container, #map, #heatMap {
+            z-index: 1 !important;
+            position: relative !important;
+        }
+
+        /* Leaflet map specific z-index fixes */
+        .leaflet-container {
+            z-index: 1 !important;
+            position: relative !important;
+        }
+
+        .leaflet-pane {
+            z-index: auto !important;
+        }
+
+        /* Ensure all leaflet controls stay below navbar */
+        .leaflet-control-container {
+            z-index: 100 !important;
+        }
+
+                        /* Fix Bootstrap modal z-index to appear above navbar and dropdowns */
+        .modal {
+            z-index: 11000 !important;
+        }
+
+        .modal.show {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        .modal-backdrop {
+            z-index: 10500 !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
+        }
+    </style>
+
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Chart.js (for analytics) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- MDRRMO Custom Styles -->
+    <!-- MDRRMO Custom Styles - Minimal & Clean -->
     <style>
-        :root {
-            --primary-50: #f8faf9;
-            --primary-100: #f1f5f3;
-            --primary-200: #e2e8e4;
-            --primary-300: #cbd5d1;
-            --primary-400: #9ca8a3;
-            --primary-500: #6b7671;
-            --primary-600: #556159;
-            --primary-700: #424d47;
-            --primary-800: #2f3833;
-            --primary-900: #1a201c;
-
-            --success: #556159;
-            --warning: #8b7355;
-            --info: #6b7671;
-            --danger: #7a5a5a;
-
-            --gray-50: #fafbfb;
-            --gray-100: #f4f6f5;
-            --gray-200: #e9ece9;
-            --gray-300: #d3d7d3;
-            --gray-400: #a1a6a1;
-            --gray-500: #6f746f;
-            --gray-600: #5c615c;
-            --gray-700: #4a4f4a;
-            --gray-800: #383d38;
-            --gray-900: #262a26;
-        }
-
+        /* Font Family Override */
         body {
-            background-color: var(--gray-50);
-            color: var(--gray-700);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
         }
 
-        /* Navigation Styles */
-        .navbar-mdrrmo {
-            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-height: 80px;
-            padding: 1rem 0 !important;
+        /* Navigation Enhancements */
+        .navbar {
+            min-height: 70px;
         }
 
-        .navbar-brand {
-            font-size: 1.5rem !important;
-            font-weight: 700 !important;
-            letter-spacing: -0.025em;
-            color: white !important;
+        /* Dropdown Menu Enhancements */
+        .dropdown-content {
+            border: 1px solid hsl(var(--b3));
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        .navbar-nav .nav-link {
-            color: white !important;
-            padding: 0.75rem 1rem !important;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease-in-out;
-            font-weight: 500;
-            margin: 0 0.25rem;
+        /* Smooth Transitions */
+        .menu li > a:hover,
+        .btn {
+            transition: all 0.2s ease;
         }
 
-        .navbar-nav .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
-        }
-
-        .dropdown-menu {
-            border: 0;
-            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15);
-            border-radius: 0.75rem;
-            margin-top: 0.5rem;
-            padding: 0.75rem 0;
-        }
-
-        .dropdown-item {
-            padding: 0.75rem 1.5rem;
-            transition: all 0.2s ease-in-out;
-            font-weight: 500;
-            color: var(--gray-700);
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--primary-100);
-            transform: translateX(2px);
-            color: var(--primary-800);
-        }
-
-        /* Button Styles */
-        .btn-primary {
-            background-color: var(--primary-500);
-            border-color: var(--primary-500);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-600);
-            border-color: var(--primary-600);
-        }
-
-        .btn-outline-primary {
-            color: var(--primary-600);
-            border-color: var(--primary-400);
-        }
-
-        .btn-outline-primary:hover {
-            background-color: var(--primary-500);
-            border-color: var(--primary-500);
-        }
-
-        /* Card Styles */
-        .card {
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-radius: 0.75rem;
-        }
-
-        .card-header {
-            background-color: var(--primary-50);
-            border-bottom: 1px solid var(--gray-200);
-            color: var(--primary-800);
-            font-weight: 600;
-        }
-
-        /* Alert Styles */
-        .alert-success {
-            background-color: var(--primary-50);
-            color: var(--primary-800);
-            border-left: 4px solid var(--success);
-            border-radius: 0.5rem;
-        }
-
-        .alert-danger {
-            background-color: var(--gray-100);
-            color: var(--danger);
-            border-left: 4px solid var(--danger);
-            border-radius: 0.5rem;
-        }
-
-        .alert-warning {
-            background-color: var(--gray-100);
-            color: var(--warning);
-            border-left: 4px solid var(--warning);
-            border-radius: 0.5rem;
-        }
-
-        .alert-info {
-            background-color: var(--primary-50);
-            color: var(--primary-700);
-            border-left: 4px solid var(--info);
-            border-radius: 0.5rem;
-        }
-
-        /* Form Styles */
-        .form-control:focus {
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(107, 118, 113, 0.1);
-        }
-
-        .form-select:focus {
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(107, 118, 113, 0.1);
-        }
-
-        /* Table Styles */
-        .table-hover tbody tr:hover {
-            background-color: var(--primary-50);
-        }
-
-        /* Page Header */
+        /* Bootstrap Compatibility Styles */
         .page-header {
-            background: linear-gradient(135deg, var(--primary-100) 0%, var(--gray-100) 100%);
-            border-bottom: 1px solid var(--gray-200);
+            background: linear-gradient(135deg, hsl(var(--b2)) 0%, hsl(var(--b3)) 100%);
+            border-bottom: 1px solid hsl(var(--b3));
             padding: 2rem 0;
             margin-bottom: 2rem;
         }
 
         .page-title {
-            color: var(--primary-800);
+            color: hsl(var(--bc));
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
 
         .page-subtitle {
-            color: var(--gray-600);
+            color: hsl(var(--bc) / 0.7);
             font-weight: 400;
         }
-
-        /* Status Badges */
-        .badge.status-pending { background-color: var(--warning); }
-        .badge.status-responding { background-color: var(--info); }
-        .badge.status-resolved { background-color: var(--success); }
-        .badge.status-closed { background-color: var(--gray-500); }
 
         /* Content Area */
         .main-content {
             min-height: calc(100vh - 160px);
-            padding: 2rem 0;
+            padding: 0;
         }
 
         /* Footer */
         .footer {
-            background-color: var(--gray-800);
-            color: var(--gray-300);
-            text-align: center;
+            background-color: #ffffff;
+            color: #6c757d;
+            /* text-align: center; */
+            width: 100%;
             padding: 1.5rem 0;
-            margin-top: auto;
+            margin: 0 auto;
+            border-top: 1px solid #e9ecef;
         }
 
         /* Animations */
@@ -293,29 +241,34 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <p class="mb-0">&copy; {{ date('Y') }} MDRRMO Maramag. All rights reserved. | Accident Reporting & Vehicle Utilization System</p>
-        </div>
+        <p class="mb-0 text-center" >&copy; {{ date('Y') }} MDRRMO Maramag. All rights reserved. | Accident Reporting & Vehicle Utilization System</p>
     </footer>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JS (kept for other views like alerts, modals, etc.) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Common JavaScript -->
     <script>
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                if (alert.querySelector('.btn-close')) {
-                    bootstrap.Alert.getOrCreateInstance(alert).close();
-                }
-            });
-        }, 5000);
-
-        // Add fade-in animation to main content
+        // Wait for DOM and Bootstrap to be ready
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.main-content').classList.add('fade-in');
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    if (alert.querySelector('.btn-close')) {
+                        bootstrap.Alert.getOrCreateInstance(alert).close();
+                    }
+                });
+            }, 5000);
+
+            // Add fade-in animation to main content
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.classList.add('fade-in');
+            }
+
+            // DaisyUI dropdowns work automatically, no JavaScript initialization needed
+            console.log('DaisyUI navigation loaded successfully');
         });
 
         // ========================================
@@ -517,6 +470,8 @@
                 showInfoToast('{{ session('info') }}');
             @endif
         });
+
+
     </script>
 
     @stack('scripts')

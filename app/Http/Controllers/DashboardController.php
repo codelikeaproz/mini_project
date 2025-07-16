@@ -82,8 +82,8 @@ final class DashboardController extends Controller
             'total_vehicles' => Vehicle::count(),
             'available_vehicles' => Vehicle::where('status', 'available')->count(),
             'deployed_vehicles' => Vehicle::where('status', 'deployed')->count(),
-            'total_staff' => User::where('role', 'mdrrmo_staff')->count(),
-            'active_staff' => User::where('role', 'mdrrmo_staff')->where('is_active', true)->count(),
+            'total_staff' => User::whereIn('role', ['admin', 'mdrrmo_staff'])->count(),
+            'active_staff' => User::whereIn('role', ['admin', 'mdrrmo_staff'])->where('is_active', true)->count(),
         ];
     }
 
@@ -211,7 +211,7 @@ final class DashboardController extends Controller
             'vehicleStats',
             'recentActivities',
             'systemActivity'
-        ));
+        ))->with('recent_incidents', $recentIncidents);
     }
 
     /**

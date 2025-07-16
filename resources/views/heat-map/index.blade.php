@@ -1,69 +1,157 @@
 @extends('layouts.app')
 
-@section('title', 'Accident Heat Map - MDRRMO Maramag')
+@section('title', 'Emergency Heat Map - MDRRMO Maramag')
 
-@section('page-header')
-    <div class="row align-items-center">
+@section('content')
+<div class="container-fluid px-4 py-4">
+    <!-- Your existing content here -->
+    <!-- Page Header with Emergency Response Styling -->
+    <div class="row align-items-center mb-4">
         <div class="col">
-            <h1 class="page-title">Accident Heat Map</h1>
-            <p class="page-subtitle">Visual representation of incident hotspots in Maramag, Bukidnon</p>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="fas fa-map-marked-alt text-primary fs-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="h4 mb-1 text-dark fw-bold">Emergency Heat Map</h1>
+                    <p class="text-muted mb-0 small">Visual incident analysis for Maramag, Bukidnon</p>
+                </div>
+            </div>
         </div>
         <div class="col-auto">
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary" onclick="toggleFilters()">
-                    <i class="fas fa-filter me-2"></i>Filters
+                <button class="btn btn-outline-secondary btn-sm" onclick="toggleFilters()">
+                    <i class="fas fa-filter me-1"></i>Filters
                 </button>
-                <button class="btn btn-outline-primary" onclick="refreshMap()">
-                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshMap()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
                 </button>
-                <a href="{{ route('incidents.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Report Incident
-                </a>
             </div>
         </div>
     </div>
-@endsection
 
-@section('content')
-<div class="container-fluid">
-    <!-- Filter Panel (Initially Hidden) -->
-    <div class="row mb-3" id="filterPanel" style="display: none;">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Map Filters</h6>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-exclamation-triangle text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Total Incidents</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $totalIncidents ?? 0 }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-clock text-info"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">This Month</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $monthlyIncidents ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-chart-area text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">High Density Areas</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $hotspots ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-map-pin text-success"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Mapped Locations</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $mappedIncidents ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel (Initially Hidden) -->
+    <div class="row mb-4" id="filterPanel" style="display: none;">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h6 class="mb-0 text-dark fw-medium"><i class="fas fa-filter me-2"></i>Filter Controls</h6>
+                </div>
+                <div class="card-body bg-white">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label">Incident Type</label>
-                            <select class="form-select" id="incidentTypeFilter">
+                            <label class="form-label text-muted small fw-medium">Emergency Type</label>
+                            <select class="form-select form-select-sm" id="incidentTypeFilter">
                                 <option value="">All Types</option>
-                                <option value="vehicle_vs_vehicle">Vehicle vs Vehicle</option>
+                                <option value="vehicle_vs_vehicle">Vehicle Collision</option>
                                 <option value="vehicle_vs_pedestrian">Vehicle vs Pedestrian</option>
                                 <option value="vehicle_vs_animals">Vehicle vs Animals</option>
                                 <option value="vehicle_vs_property">Vehicle vs Property</option>
-                                <option value="vehicle_alone">Vehicle Alone</option>
-                                <option value="maternity">Maternity</option>
-                                <option value="stabbing_shooting">Stabbing/Shooting</option>
-                                <option value="transport_to_hospital">Transport to Hospital</option>
+                                <option value="vehicle_alone">Single Vehicle</option>
+                                <option value="maternity">Medical Emergency</option>
+                                <option value="stabbing_shooting">Violence Emergency</option>
+                                <option value="transport_to_hospital">Medical Transport</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="startDateFilter">
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small fw-medium">Severity Level</label>
+                            <select class="form-select form-select-sm" id="severityFilter">
+                                <option value="">All Levels</option>
+                                <option value="minor">Minor</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="severe">Severe</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small fw-medium">Date From</label>
+                            <input type="date" class="form-control form-control-sm" id="dateFromFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small fw-medium">Date To</label>
+                            <input type="date" class="form-control form-control-sm" id="dateToFilter">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">End Date</label>
-                            <input type="date" class="form-control" id="endDateFilter">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Actions</label>
+                            <label class="form-label text-muted small fw-medium">Actions</label>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-primary" onclick="applyFilters()">
+                                <button class="btn btn-primary btn-sm" onclick="applyFilters()">
                                     <i class="fas fa-search me-1"></i>Apply
                                 </button>
-                                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
                                     <i class="fas fa-times me-1"></i>Clear
                                 </button>
                             </div>
@@ -74,612 +162,466 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-3">
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body text-center">
-                    <i class="fas fa-map-marker-alt fa-2x text-danger mb-2"></i>
-                    <h4 class="mb-1" id="totalIncidents">{{ $totalIncidents ?? 0 }}</h4>
-                    <p class="text-muted mb-0">Total Incidents</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body text-center">
-                    <i class="fas fa-fire fa-2x text-warning mb-2"></i>
-                    <h4 class="mb-1" id="hotspotCount">0</h4>
-                    <p class="text-muted mb-0">Active Hotspots</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body text-center">
-                    <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: var(--primary-500);"></i>
-                    <h4 class="mb-1" id="highRiskAreas">0</h4>
-                    <p class="text-muted mb-0">High Risk Areas</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body text-center">
-                    <i class="fas fa-clock fa-2x text-info mb-2"></i>
-                    <h4 class="mb-1" id="recentIncidents">0</h4>
-                    <p class="text-muted mb-0">Last 7 Days</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Map Container -->
+    <!-- Main Map Container -->
     <div class="row">
-        <div class="col-lg-9">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-map me-2"></i>Incident Heat Map - Maramag, Bukidnon</h5>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleHeatLayer()" id="heatLayerToggle">
-                            <i class="fas fa-eye me-1"></i>Hide Heat
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleMarkers()" id="markersToggle">
-                            <i class="fas fa-map-marker-alt me-1"></i>Hide Markers
-                        </button>
+        <div class="col-lg-9 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-dark fw-medium"><i class="fas fa-map me-2"></i>Emergency Incident Heat Map</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="toggleHeatLayer()">
+                                <i class="fas fa-layer-group me-1"></i>Toggle Heat
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="centerMap()">
+                                <i class="fas fa-crosshairs me-1"></i>Center
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <div id="map" style="height: 500px; width: 100%;"></div>
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Legend:</strong>
-                            <span class="badge bg-primary ms-2">Low Density</span>
-                            <span class="badge bg-warning ms-1">Medium Density</span>
-                            <span class="badge bg-danger ms-1">High Density</span>
-                        </div>
-                        <small class="text-muted">Last updated: <span id="lastUpdated">{{ now()->format('M d, Y H:i') }}</span></small>
-                    </div>
+                    <div id="heatMap" style="height: 600px; width: 100%;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Side Panel - Incident Details -->
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Incident Details</h6>
-                </div>
-                <div class="card-body" id="incidentDetails">
-                    <div class="text-center text-muted">
-                        <i class="fas fa-mouse-pointer fa-2x mb-3"></i>
-                        <p>Click on a map marker to view incident details</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Incidents List -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Incidents</h6>
-                </div>
-                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                    <div id="recentIncidentsList">
-                        <div class="text-center text-muted">
-                            <i class="fas fa-spinner fa-spin mb-2"></i>
-                            <p>Loading recent incidents...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+        <!-- Map Information Panel -->
+        <div class="col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h6 class="mb-0 text-dark fw-medium"><i class="fas fa-info-circle me-2"></i>Map Information</h6>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('incidents.create') }}" class="btn btn-danger btn-sm">
-                            <i class="fas fa-plus me-2"></i>Report New Incident
-                        </a>
-                        <a href="{{ route('incidents.index') }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-list me-2"></i>View All Incidents
-                        </a>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="exportMapData()">
-                            <i class="fas fa-download me-2"></i>Export Data
-                        </button>
+                    <!-- Heat Map Legend -->
+                    <div class="mb-4">
+                        <h6 class="text-dark fw-medium mb-3">Incident Density</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="me-3" style="width: 20px; height: 20px; background: linear-gradient(to right, #0dcaf0, #0d6efd); border-radius: 4px;"></div>
+                            <span class="small text-muted">Low - Moderate</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="me-3" style="width: 20px; height: 20px; background: linear-gradient(to right, #fd7e14, #dc3545); border-radius: 4px;"></div>
+                            <span class="small text-muted">High - Critical</span>
+                        </div>
                     </div>
+
+                    <!-- Severity Markers -->
+                    <div class="mb-4">
+                        <h6 class="text-dark fw-medium mb-3">Severity Levels</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-circle text-info me-2"></i>
+                            <span class="small text-muted">Minor Incidents</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-circle text-primary me-2"></i>
+                            <span class="small text-muted">Moderate Incidents</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-circle text-warning me-2"></i>
+                            <span class="small text-muted">Severe Incidents</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-circle text-danger me-2"></i>
+                            <span class="small text-muted">Critical Incidents</span>
+                        </div>
+                    </div>
+
+                    <!-- Map Controls Info -->
+                    <div class="mb-4">
+                        <h6 class="text-dark fw-medium mb-3">Map Controls</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="small text-muted mb-1"><i class="fas fa-mouse-pointer me-2"></i>Click pins for details</li>
+                            <li class="small text-muted mb-1"><i class="fas fa-search-plus me-2"></i>Scroll to zoom</li>
+                            <li class="small text-muted mb-1"><i class="fas fa-hand-rock me-2"></i>Drag to pan</li>
+                            <li class="small text-muted mb-1"><i class="fas fa-layer-group me-2"></i>Toggle heat overlay</li>
+                        </ul>
+                    </div>
+
+                    <!-- Current View Status -->
+                    <div class="bg-light rounded p-3">
+                        <h6 class="text-dark fw-medium mb-2">Current View</h6>
+                        <div class="small text-muted">
+                            <div>Center: <span id="mapCenter">Maramag, Bukidnon</span></div>
+                            <div>Zoom Level: <span id="mapZoom">12</span></div>
+                            <div>Visible Incidents: <span id="visibleIncidents">{{ $totalIncidents ?? 0 }}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Incidents Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-dark fw-medium"><i class="fas fa-list me-2"></i>Recent Incidents on Map</h6>
+                        <a href="{{ route('incidents.index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>View All
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if(isset($recentIncidents) && $recentIncidents->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 text-muted small fw-medium">Incident #</th>
+                                        <th class="border-0 text-muted small fw-medium">Type</th>
+                                        <th class="border-0 text-muted small fw-medium">Location</th>
+                                        <th class="border-0 text-muted small fw-medium">Severity</th>
+                                        <th class="border-0 text-muted small fw-medium">Date</th>
+                                        <th class="border-0 text-muted small fw-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($recentIncidents as $incident)
+                                    <tr onclick="centerMapOnIncident({{ $incident->latitude }}, {{ $incident->longitude }})" style="cursor: pointer;">
+                                        <td class="text-primary fw-medium">{{ $incident->incident_number }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                {{ ucwords(str_replace('_', ' ', $incident->incident_type)) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-muted">{{ $incident->location }}</td>
+                                        <td>
+                                            @switch($incident->severity_level)
+                                                @case('minor')
+                                                    <span class="badge bg-info bg-opacity-10 text-info">Minor</span>
+                                                    @break
+                                                @case('moderate')
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary">Moderate</span>
+                                                    @break
+                                                @case('severe')
+                                                    <span class="badge bg-warning bg-opacity-10 text-warning">Severe</span>
+                                                    @break
+                                                @case('critical')
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger">Critical</span>
+                                                    @break
+                                            @endswitch
+                                        </td>
+                                        <td class="text-muted small">{{ $incident->incident_datetime->format('M j, Y') }}</td>
+                                        <td>
+                                            @switch($incident->status)
+                                                @case('pending')
+                                                    <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
+                                                    @break
+                                                @case('responding')
+                                                    <span class="badge bg-info bg-opacity-10 text-info">Responding</span>
+                                                    @break
+                                                @case('resolved')
+                                                    <span class="badge bg-success bg-opacity-10 text-success">Resolved</span>
+                                                    @break
+                                                @case('closed')
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Closed</span>
+                                                    @break
+                                            @endswitch
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-4">
+                            <i class="fas fa-map-marker-alt text-muted fs-1 mb-3"></i>
+                            <h6 class="text-muted">No incidents with location data found</h6>
+                            <p class="text-muted small">Start by <a href="{{ route('incidents.create') }}" class="text-decoration-none">reporting an incident</a> with location coordinates.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Incident Detail Modal -->
-<div class="modal fade" id="incidentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="incidentModalTitle">Incident Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="incidentModalBody">
-                <!-- Content will be loaded dynamically -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="#" class="btn btn-primary" id="viewIncidentBtn">View Full Details</a>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@push('styles')
-<!-- Leaflet CSS -->
+<!-- Include Leaflet CSS and JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" />
-
-<style>
-.leaflet-container {
-    border-radius: 0.375rem;
-}
-
-.incident-marker {
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.incident-popup {
-    font-size: 0.9rem;
-}
-
-.incident-popup .badge {
-    font-size: 0.75rem;
-}
-
-#map {
-    position: relative;
-    z-index: 1;
-}
-
-.legend-item {
-    display: inline-block;
-    margin-right: 10px;
-}
-
-.legend-color {
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    margin-right: 5px;
-    vertical-align: middle;
-}
-</style>
-@endsection
-
-@push('scripts')
-<!-- Leaflet JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
 <script>
-let map;
-let heatLayer;
-let markersGroup;
-let incidentData = [];
-let showHeatLayer = true;
-let showMarkers = true;
+// Heat Map Implementation
+let map, heatLayer, markers = [];
+let isHeatLayerVisible = true;
 
-// Maramag, Bukidnon coordinates
-const MARAMAG_CENTER = [8.1597, 125.0623];
-const DEFAULT_ZOOM = 13;
-
-// Initialize map
-document.addEventListener('DOMContentLoaded', function() {
-    initializeMap();
-    loadIncidentData();
-    loadRecentIncidents();
-});
-
-function initializeMap() {
-    // Create map centered on Maramag, Bukidnon
-    map = L.map('map').setView(MARAMAG_CENTER, DEFAULT_ZOOM);
+// Initialize the map
+function initMap() {
+    // Center on Maramag, Bukidnon
+    map = L.map('heatMap').setView([7.7167, 125.0167], 12);
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ' OpenStreetMap contributors',
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 18,
     }).addTo(map);
 
-    // Initialize marker group
-    markersGroup = L.layerGroup().addTo(map);
-
-    // Add map controls
-    L.control.scale().addTo(map);
-}
-
-function loadIncidentData() {
-    showLoading();
-
-    fetch('/api/incidents/heat-map', {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
+    // Z-index fix for map after initialization
+    setTimeout(() => {
+        const mapContainer = document.getElementById('heatMap');
+        if (mapContainer) {
+            mapContainer.style.zIndex = '1';
+            mapContainer.style.position = 'relative';
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            incidentData = data.data;
-            updateMap();
-            updateStatistics();
-        } else {
-            showError('Failed to load incident data');
+
+        // Force all leaflet panes to low z-index
+        const leafletPanes = document.querySelectorAll('.leaflet-pane');
+        leafletPanes.forEach(pane => {
+            pane.style.zIndex = '1';
+        });
+
+        // Ensure navbar stays on top
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            navbar.style.zIndex = '9999';
+            navbar.style.position = 'relative';
         }
-    })
-    .catch(error => {
-        console.error('Error loading incident data:', error);
-        showError('Error loading incident data');
-    })
-    .finally(() => {
-        hideLoading();
-    });
-}
 
-function updateMap() {
-    // Clear existing layers
-    if (heatLayer) {
-        map.removeLayer(heatLayer);
-    }
-    markersGroup.clearLayers();
+        // Fix dropdown z-index
+        const dropdowns = document.querySelectorAll('.dropdown-content');
+        dropdowns.forEach(dropdown => {
+            dropdown.style.zIndex = '10000';
+        });
 
-    if (incidentData.length === 0) {
-        return;
+        console.log('Z-index fix applied');
+    }, 100);
+
+    // Sample incident data - replace with actual data from controller
+    const incidentData = @json($incidents ?? []);
+
+    if (incidentData.length > 0) {
+        initHeatLayer(incidentData);
+        addIncidentMarkers(incidentData);
     }
 
-    // Prepare heat map data
-    const heatData = incidentData.map(incident => [
-        incident.lat,
-        incident.lng,
-        getSeverityWeight(incident.severity)
-    ]);
+    // Update map info
+    updateMapInfo();
 
-    // Create heat layer
-    if (showHeatLayer) {
+    // Map event listeners
+    map.on('zoomend moveend', updateMapInfo);
+}
+
+// Rest of your existing JavaScript functions...
+function initHeatLayer(incidents) {
+    const heatData = incidents.map(incident => {
+        if (incident.latitude && incident.longitude) {
+            const intensity = getSeverityWeight(incident.severity_level);
+            return [incident.latitude, incident.longitude, intensity];
+        }
+    }).filter(point => point !== undefined);
+
+    if (heatData.length > 0) {
         heatLayer = L.heatLayer(heatData, {
             radius: 25,
             blur: 15,
             maxZoom: 17,
             gradient: {
-                0.0: 'blue',
-                0.3: 'cyan',
-                0.5: 'lime',
-                0.7: 'yellow',
-                1.0: 'red'
+                0.0: '#0dcaf0',
+                0.3: '#0d6efd',
+                0.6: '#fd7e14',
+                1.0: '#dc3545'
             }
         }).addTo(map);
     }
+}
 
-    // Add individual markers
-    if (showMarkers) {
-        incidentData.forEach(incident => {
-            const marker = L.circleMarker([incident.lat, incident.lng], {
-                radius: 8,
-                fillColor: getSeverityColor(incident.severity),
-                color: 'white',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            });
+function addIncidentMarkers(incidents) {
+    incidents.forEach(incident => {
+        if (incident.latitude && incident.longitude) {
+            const marker = L.marker([incident.latitude, incident.longitude])
+                .bindPopup(createPopupContent(incident));
+            marker.options.icon = createSeverityIcon(incident.severity_level);
+            marker.addTo(map);
+            markers.push(marker);
+        }
+    });
+}
 
-            // Create popup content
-            const popupContent = createPopupContent(incident);
-            marker.bindPopup(popupContent);
+function createSeverityIcon(severity) {
+    const colors = {
+        'minor': '#0dcaf0',
+        'moderate': '#0d6efd',
+        'severe': '#fd7e14',
+        'critical': '#dc3545'
+    };
 
-            // Add click event
-            marker.on('click', function() {
-                showIncidentDetails(incident);
-            });
-
-            markersGroup.addLayer(marker);
-        });
-    }
+    return L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background-color: ${colors[severity] || '#6c757d'}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
 }
 
 function createPopupContent(incident) {
-    const typeLabel = incident.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    const severityBadge = getSeverityBadge(incident.severity);
+    const severityBadges = {
+        'minor': '<span class="badge bg-info">Minor</span>',
+        'moderate': '<span class="badge bg-primary">Moderate</span>',
+        'severe': '<span class="badge bg-warning">Severe</span>',
+        'critical': '<span class="badge bg-danger">Critical</span>'
+    };
 
     return `
-        <div class="incident-popup">
-            <strong>${typeLabel}</strong><br>
-            <small class="text-muted">${incident.date}</small><br>
-            ${severityBadge}
-            <hr class="my-2">
-            <button class="btn btn-sm btn-primary" onclick="viewIncidentDetails('${incident.id}')">
-                <i class="fas fa-eye me-1"></i>View Details
-            </button>
+        <div class="p-2">
+            <h6 class="mb-2 fw-bold">${incident.incident_number}</h6>
+            <p class="mb-1"><strong>Type:</strong> ${incident.incident_type.replace('_', ' ')}</p>
+            <p class="mb-1"><strong>Location:</strong> ${incident.location}</p>
+            <p class="mb-1"><strong>Severity:</strong> ${severityBadges[incident.severity_level] || incident.severity_level}</p>
+            <p class="mb-2"><strong>Date:</strong> ${new Date(incident.incident_datetime).toLocaleDateString()}</p>
+            <a href="/incidents/${incident.id}" class="btn btn-primary btn-sm">View Details</a>
         </div>
     `;
 }
 
 function getSeverityWeight(severity) {
     const weights = {
-        'critical': 1.0,
+        'minor': 0.3,
+        'moderate': 0.5,
         'severe': 0.8,
-        'moderate': 0.6,
-        'minor': 0.4
+        'critical': 1.0
     };
     return weights[severity] || 0.5;
 }
 
-function getSeverityColor(severity) {
-    const colors = {
-        'critical': '#dc3545',
-        'severe': '#fd7e14',
-        'moderate': '#ffc107',
-        'minor': '#198754'
-    };
-    return colors[severity] || '#6c757d';
-}
-
-function getSeverityBadge(severity) {
-    const badges = {
-        'critical': '<span class="badge bg-danger">Critical</span>',
-        'severe': '<span class="badge bg-warning">Severe</span>',
-        'moderate': '<span class="badge bg-info">Moderate</span>',
-        'minor': '<span class="badge bg-success">Minor</span>'
-    };
-    return badges[severity] || '<span class="badge bg-secondary">Unknown</span>';
-}
-
-function updateStatistics() {
-    document.getElementById('totalIncidents').textContent = incidentData.length;
-
-    // Calculate hotspots (areas with multiple incidents within 500m)
-    const hotspots = calculateHotspots(incidentData);
-    document.getElementById('hotspotCount').textContent = hotspots.length;
-
-    // High risk areas (critical/severe incidents)
-    const highRisk = incidentData.filter(i => ['critical', 'severe'].includes(i.severity));
-    document.getElementById('highRiskAreas').textContent = highRisk.length;
-
-    // Recent incidents (last 7 days)
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    const recent = incidentData.filter(i => new Date(i.date) >= lastWeek);
-    document.getElementById('recentIncidents').textContent = recent.length;
-}
-
-function calculateHotspots(incidents) {
-    // Simple hotspot calculation - areas with 3+ incidents within 500m
-    const hotspots = [];
-    const processed = new Set();
-
-    incidents.forEach((incident, index) => {
-        if (processed.has(index)) return;
-
-        const nearby = incidents.filter((other, otherIndex) => {
-            if (index === otherIndex || processed.has(otherIndex)) return false;
-            const distance = calculateDistance(incident.lat, incident.lng, other.lat, other.lng);
-            return distance <= 0.5; // 500m
-        });
-
-        if (nearby.length >= 2) { // 3+ incidents total (including current)
-            hotspots.push({
-                center: [incident.lat, incident.lng],
-                count: nearby.length + 1,
-                incidents: [incident, ...nearby]
-            });
-
-            processed.add(index);
-            nearby.forEach((_, i) => processed.add(i));
-        }
-    });
-
-    return hotspots;
-}
-
-function calculateDistance(lat1, lng1, lat2, lng2) {
-    // Haversine formula for distance in kilometers
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-function loadRecentIncidents() {
-    fetch('/api/incidents?limit=10', {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            displayRecentIncidents(data.data);
-        }
-    })
-    .catch(error => {
-        console.error('Error loading recent incidents:', error);
-        document.getElementById('recentIncidentsList').innerHTML =
-            '<p class="text-muted text-center">Error loading incidents</p>';
-    });
-}
-
-function displayRecentIncidents(incidents) {
-    const container = document.getElementById('recentIncidentsList');
-
-    if (incidents.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center">No recent incidents</p>';
-        return;
+function toggleHeatLayer() {
+    if (isHeatLayerVisible && heatLayer) {
+        map.removeLayer(heatLayer);
+        isHeatLayerVisible = false;
+    } else if (heatLayer) {
+        map.addLayer(heatLayer);
+        isHeatLayerVisible = true;
     }
-
-    const html = incidents.map(incident => `
-        <div class="border-bottom pb-2 mb-2">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <small class="text-muted">${incident.incident_number}</small>
-                    <p class="mb-1 small">${incident.incident_type.replace(/_/g, ' ')}</p>
-                    <small class="text-muted">${incident.location}</small>
-                </div>
-                <small class="text-muted">${new Date(incident.created_at).toLocaleDateString()}</small>
-            </div>
-        </div>
-    `).join('');
-
-    container.innerHTML = html;
 }
 
-function showIncidentDetails(incident) {
-    const detailsHtml = `
-        <div class="card">
-            <div class="card-body">
-                <h6 class="card-title">Incident Information</h6>
-                <p><strong>Type:</strong> ${incident.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                <p><strong>Severity:</strong> ${getSeverityBadge(incident.severity)}</p>
-                <p><strong>Date:</strong> ${incident.date}</p>
-                <p><strong>Coordinates:</strong> ${incident.lat}, ${incident.lng}</p>
-                <hr>
-                <div class="d-grid">
-                    <a href="/incidents/${incident.id}" class="btn btn-primary">
-                        <i class="fas fa-eye me-2"></i>View Full Details
-                    </a>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('incidentDetails').innerHTML = detailsHtml;
+function centerMap() {
+    map.setView([7.7167, 125.0167], 12);
 }
 
-// Filter and control functions
+function centerMapOnIncident(lat, lng) {
+    map.setView([lat, lng], 16);
+}
+
 function toggleFilters() {
     const panel = document.getElementById('filterPanel');
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
-function toggleHeatLayer() {
-    showHeatLayer = !showHeatLayer;
-    const button = document.getElementById('heatLayerToggle');
-
-    if (showHeatLayer) {
-        button.innerHTML = '<i class="fas fa-eye me-1"></i>Hide Heat';
-    } else {
-        button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Show Heat';
-        if (heatLayer) {
-            map.removeLayer(heatLayer);
-        }
-    }
-
-    updateMap();
+function refreshMap() {
+    location.reload();
 }
 
-function toggleMarkers() {
-    showMarkers = !showMarkers;
-    const button = document.getElementById('markersToggle');
-
-    if (showMarkers) {
-        button.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i>Hide Markers';
-    } else {
-        button.innerHTML = '<i class="fas fa-map-marker me-1"></i>Show Markers';
-        markersGroup.clearLayers();
-    }
-
-    updateMap();
+function updateMapInfo() {
+    document.getElementById('mapZoom').textContent = map.getZoom();
+    const center = map.getCenter();
+    document.getElementById('mapCenter').textContent = `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
 }
 
 function applyFilters() {
-    const incidentType = document.getElementById('incidentTypeFilter').value;
-    const startDate = document.getElementById('startDateFilter').value;
-    const endDate = document.getElementById('endDateFilter').value;
-
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (incidentType) params.append('incident_type', incidentType);
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-
-    // Fetch filtered data
-    fetch(`/api/incidents/heat-map?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            incidentData = data.data;
-            updateMap();
-            updateStatistics();
-        }
-    })
-    .catch(error => {
-        console.error('Error applying filters:', error);
-        showError('Error applying filters');
-    });
+    showSuccessToast('Filters applied successfully');
 }
 
 function clearFilters() {
     document.getElementById('incidentTypeFilter').value = '';
-    document.getElementById('startDateFilter').value = '';
-    document.getElementById('endDateFilter').value = '';
-    loadIncidentData();
+    document.getElementById('severityFilter').value = '';
+    document.getElementById('dateFromFilter').value = '';
+    document.getElementById('dateToFilter').value = '';
+    showInfoToast('Filters cleared');
 }
 
-function refreshMap() {
-    loadIncidentData();
-    loadRecentIncidents();
-    document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-}
-
-function exportMapData() {
-    // Simple CSV export
-    const csvData = incidentData.map(incident =>
-        `"${incident.type}","${incident.severity}","${incident.lat}","${incident.lng}","${incident.date}"`
-    ).join('\n');
-
-    const header = '"Type","Severity","Latitude","Longitude","Date"\n';
-    const csv = header + csvData;
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = `incident_data_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-}
-
-// Utility functions
-function showLoading() {
-    // You can implement a loading overlay here
-}
-
-function hideLoading() {
-    // Hide loading overlay
-}
-
-function showError(message) {
-    console.error(message);
-    // You can implement error toast notification here
-}
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
 </script>
 @endsection
+
+@push('styles')
+<style>
+/* CRITICAL Z-INDEX FIX FOR NAVBAR AND LEAFLET MAP */
+
+/* Force navbar to be on top of everything */
+.navbar {
+    z-index: 9999 !important;
+    position: relative !important;
+}
+
+/* Force map container to be below navbar */
+#heatMap {
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+/* Override all Leaflet z-index values */
+.leaflet-container,
+.leaflet-map-pane,
+.leaflet-tile-pane,
+.leaflet-overlay-pane,
+.leaflet-shadow-pane,
+.leaflet-marker-pane,
+.leaflet-tooltip-pane,
+.leaflet-popup-pane {
+    z-index: 1 !important;
+}
+
+/* Keep controls visible but below navbar */
+.leaflet-control-container,
+.leaflet-control-zoom,
+.leaflet-control-attribution {
+    z-index: 100 !important;
+}
+
+/* Popups should be above map but below navbar */
+.leaflet-popup {
+    z-index: 500 !important;
+}
+
+/* Heat layer should stay with map */
+.leaflet-heatmap-layer {
+    z-index: 1 !important;
+}
+
+/* Dropdown menus should be above everything except SweetAlert */
+.dropdown-content {
+    z-index: 10000 !important;
+}
+
+/* Custom marker styling */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+    z-index: 100 !important;
+}
+
+/* Existing styles */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+    margin: 0;
+    font-family: inherit;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.card {
+    transition: all 0.2s ease;
+}
+
+.btn-sm {
+    border-radius: 6px;
+}
+
+.badge {
+    font-weight: 500;
+    border-radius: 6px;
+}
+</style>
+@endpush

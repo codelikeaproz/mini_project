@@ -32,6 +32,7 @@ final class Vehicle extends Model
         'next_maintenance_due',
         'equipment_list',
         'is_operational',
+        'assigned_driver_name',
     ];
 
     /**
@@ -77,6 +78,8 @@ final class Vehicle extends Model
     {
         return $this->hasMany(Incident::class, 'assigned_vehicle');
     }
+
+
 
     /**
      * Get the formatted vehicle type

@@ -8,8 +8,8 @@
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <div>
-                    <h1 class="h3 mb-0 text-gray-800">Vehicle Details</h1>
-                    <p class="mb-0 text-gray-600">{{ $vehicle->vehicle_number }} - {{ $vehicle->formatted_vehicle_type }}</p>
+                                                    <h1 class="h3 mb-0 text-gray-800">Vehicle Details (Updated: {{ now()->format('H:i:s') }})</h1>
+                    <p class="mb-0 text-gray-600">{{ $vehicle->vehicle_number }} - {{ ucfirst(str_replace('_', ' ', $vehicle->vehicle_type)) }}</p>
                 </div>
                 <div class="d-sm-flex">
                     <a href="{{ route('vehicles.edit', $vehicle->id) }}" class="btn btn-warning shadow-sm mr-2">
@@ -26,14 +26,7 @@
                 </div>
             </div>
 
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
+
 
             <div class="row">
                 <!-- Vehicle Information Card -->
@@ -45,7 +38,7 @@
                         <div class="card-body">
                             <div class="text-center mb-4">
                                 <div class="vehicle-icon mx-auto mb-3">
-                                    @switch($vehicle->type)
+                                    @switch($vehicle->vehicle_type)
                                         @case('ambulance')
                                             <i class="fas fa-ambulance text-danger fa-4x"></i>
                                             @break
@@ -58,12 +51,18 @@
                                         @case('patrol_car')
                                             <i class="fas fa-car text-info fa-4x"></i>
                                             @break
+                                        @case('motorcycle')
+                                            <i class="fas fa-motorcycle text-success fa-4x"></i>
+                                            @break
+                                        @case('emergency_van')
+                                            <i class="fas fa-shuttle-van text-warning fa-4x"></i>
+                                            @break
                                         @default
                                             <i class="fas fa-car fa-4x"></i>
                                     @endswitch
                                 </div>
                                 <h4 class="mb-1">{{ $vehicle->vehicle_number }}</h4>
-                                <p class="text-muted">{{ ucfirst(str_replace('_', ' ', $vehicle->type)) }}</p>
+                                <p class="text-muted">{{ ucfirst(str_replace('_', ' ', $vehicle->vehicle_type)) }}</p>
                             </div>
 
                             <div class="row mb-3">
@@ -73,12 +72,12 @@
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Type:</strong></div>
                                 <div class="col-sm-8">
-                                    <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $vehicle->type)) }}</span>
+                                    <span class="badge badge-primary">{{ ucfirst(str_replace('_', ' ', $vehicle->vehicle_type)) }}</span>
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-sm-4"><strong>Model:</strong></div>
-                                <div class="col-sm-8">{{ $vehicle->model ?: 'Not specified' }}</div>
+                                <div class="col-sm-4"><strong>Make/Model:</strong></div>
+                                <div class="col-sm-8">{{ $vehicle->make_model ?: 'Not specified' }}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Year:</strong></div>
@@ -86,7 +85,21 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>License Plate:</strong></div>
-                                <div class="col-sm-8">{{ $vehicle->license_plate ?: 'Not specified' }}</div>
+                                <div class="col-sm-8">{{ $vehicle->plate_number ?: 'Not specified' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Capacity:</strong></div>
+                                <div class="col-sm-8">{{ $vehicle->capacity }} {{ $vehicle->capacity === 1 ? 'person' : 'people' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Operational:</strong></div>
+                                <div class="col-sm-8">
+                                    @if($vehicle->is_operational)
+                                        <span class="badge badge-success">Yes</span>
+                                    @else
+                                        <span class="badge badge-warning">No</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-sm-4"><strong>Added to Fleet:</strong></div>
@@ -106,31 +119,20 @@
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Status:</strong></div>
                                 <div class="col-sm-8">
-                                    @switch($vehicle->status)
-                                        @case('available')
-                                            <span class="badge badge-success">Available</span>
-                                            @break
-                                        @case('in_use')
-                                            <span class="badge badge-primary">In Use</span>
-                                            @break
-                                        @case('maintenance')
-                                            <span class="badge badge-warning">Under Maintenance</span>
-                                            @break
-                                        @case('out_of_service')
-                                            <span class="badge badge-danger">Out of Service</span>
-                                            @break
-                                        @default
-                                            <span class="badge badge-secondary">{{ ucfirst($vehicle->status) }}</span>
-                                    @endswitch
+                                    <!-- Debug: Status value is: {{ $vehicle->status }} -->
+                                    <span class="badge badge-primary" style="background-color: red !important; color: white !important;">DEPLOYED ({{ $vehicle->status }})</span>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Current Location:</strong></div>
-                                <div class="col-sm-8">{{ $vehicle->current_location ?: 'MDRRMO Station' }}</div>
+                                <div class="col-sm-8">MDRRMO Station</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Assigned Driver:</strong></div>
-                                <div class="col-sm-8">{{ $vehicle->assigned_driver ?: 'Not assigned' }}</div>
+                                <div class="col-sm-8">
+                                    <!-- Debug: Driver value is: {{ $vehicle->assigned_driver_name }} -->
+                                    <span class="badge badge-info" style="background-color: blue !important; color: white !important;">DRIVER: {{ $vehicle->assigned_driver_name ?: 'NONE' }}</span>
+                                </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Last Updated:</strong></div>
@@ -139,10 +141,10 @@
                                     <br><small class="text-muted">{{ $vehicle->updated_at->diffForHumans() }}</small>
                                 </div>
                             </div>
-                            @if($vehicle->notes)
+                            @if($vehicle->equipment_list)
                                 <div class="row">
-                                    <div class="col-sm-4"><strong>Notes:</strong></div>
-                                    <div class="col-sm-8">{{ $vehicle->notes }}</div>
+                                    <div class="col-sm-4"><strong>Equipment:</strong></div>
+                                    <div class="col-sm-8">{{ $vehicle->equipment_list }}</div>
                                 </div>
                             @endif
                         </div>
@@ -159,21 +161,24 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-4">
+                                @php
+                                    $fuelPercentage = $vehicle->fuel_capacity > 0 ? round(($vehicle->current_fuel / $vehicle->fuel_capacity) * 100) : 0;
+                                @endphp
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span><strong>Fuel Level:</strong></span>
-                                    <span class="badge badge-{{ $vehicle->fuel_level >= 50 ? 'success' : ($vehicle->fuel_level >= 25 ? 'warning' : 'danger') }}">
-                                        {{ $vehicle->fuel_level }}%
+                                    <span class="badge badge-{{ $fuelPercentage >= 50 ? 'success' : ($fuelPercentage >= 25 ? 'warning' : 'danger') }}">
+                                        {{ $fuelPercentage }}%
                                     </span>
                                 </div>
                                 <div class="progress">
                                     <div class="progress-bar
-                                        @if($vehicle->fuel_level >= 50) bg-success
-                                        @elseif($vehicle->fuel_level >= 25) bg-warning
+                                        @if($fuelPercentage >= 50) bg-success
+                                        @elseif($fuelPercentage >= 25) bg-warning
                                         @else bg-danger
                                         @endif"
                                         role="progressbar"
-                                        style="width: {{ $vehicle->fuel_level }}%"
-                                        aria-valuenow="{{ $vehicle->fuel_level }}"
+                                        style="width: {{ $fuelPercentage }}%"
+                                        aria-valuenow="{{ $fuelPercentage }}"
                                         aria-valuemin="0"
                                         aria-valuemax="100">
                                     </div>
@@ -181,23 +186,15 @@
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-sm-6"><strong>Mileage:</strong></div>
-                                <div class="col-sm-6">{{ number_format($vehicle->mileage) }} km</div>
+                                <div class="col-sm-6"><strong>Current Fuel:</strong></div>
+                                <div class="col-sm-6">{{ $vehicle->current_fuel }} / {{ $vehicle->fuel_capacity }} liters</div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-sm-6"><strong>Last Refuel:</strong></div>
-                                <div class="col-sm-6">
-                                    {{ $vehicle->last_refuel_date ? $vehicle->last_refuel_date->format('M d, Y') : 'Not recorded' }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-6"><strong>Last Refuel Amount:</strong></div>
-                                <div class="col-sm-6">
-                                    {{ $vehicle->last_refuel_amount ? $vehicle->last_refuel_amount . ' liters' : 'Not recorded' }}
-                                </div>
+                                <div class="col-sm-6"><strong>Odometer Reading:</strong></div>
+                                <div class="col-sm-6">{{ number_format($vehicle->odometer_reading) }} km</div>
                             </div>
 
-                            @if($vehicle->fuel_level < 25)
+                            @if($fuelPercentage < 25)
                                 <div class="alert alert-warning mt-3">
                                     <i class="fas fa-exclamation-triangle"></i>
                                     <strong>Low Fuel Alert:</strong> This vehicle needs refueling.
@@ -217,9 +214,9 @@
                             <div class="row mb-3">
                                 <div class="col-sm-6"><strong>Last Maintenance:</strong></div>
                                 <div class="col-sm-6">
-                                    @if($vehicle->last_maintenance_date)
-                                        {{ $vehicle->last_maintenance_date->format('M d, Y') }}
-                                        <br><small class="text-muted">{{ $vehicle->last_maintenance_date->diffForHumans() }}</small>
+                                    @if($vehicle->last_maintenance)
+                                        {{ $vehicle->last_maintenance->format('M d, Y') }}
+                                        <br><small class="text-muted">{{ $vehicle->last_maintenance->diffForHumans() }}</small>
                                     @else
                                         <span class="text-muted">No maintenance recorded</span>
                                     @endif
@@ -228,11 +225,11 @@
                             <div class="row mb-3">
                                 <div class="col-sm-6"><strong>Next Scheduled:</strong></div>
                                 <div class="col-sm-6">
-                                    @if($vehicle->next_maintenance_date)
-                                        {{ $vehicle->next_maintenance_date->format('M d, Y') }}
-                                        @if($vehicle->next_maintenance_date->isPast())
+                                    @if($vehicle->next_maintenance_due)
+                                        {{ $vehicle->next_maintenance_due->format('M d, Y') }}
+                                        @if($vehicle->next_maintenance_due->isPast())
                                             <br><span class="badge badge-danger">Overdue</span>
-                                        @elseif($vehicle->next_maintenance_date->diffInDays() <= 7)
+                                        @elseif($vehicle->next_maintenance_due->diffInDays() <= 7)
                                             <br><span class="badge badge-warning">Due Soon</span>
                                         @endif
                                     @else
@@ -240,28 +237,16 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-sm-6"><strong>Maintenance Type:</strong></div>
-                                <div class="col-sm-6">
-                                    {{ $vehicle->maintenance_type ?: 'Not specified' }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-6"><strong>Maintenance Notes:</strong></div>
-                                <div class="col-sm-6">
-                                    {{ $vehicle->maintenance_notes ?: 'No notes' }}
-                                </div>
-                            </div>
 
-                            @if($vehicle->next_maintenance_date && $vehicle->next_maintenance_date->isPast())
+                            @if($vehicle->next_maintenance_due && $vehicle->next_maintenance_due->isPast())
                                 <div class="alert alert-danger mt-3">
                                     <i class="fas fa-tools"></i>
                                     <strong>Maintenance Overdue:</strong> This vehicle requires immediate maintenance.
                                 </div>
-                            @elseif($vehicle->next_maintenance_date && $vehicle->next_maintenance_date->diffInDays() <= 7)
+                            @elseif($vehicle->next_maintenance_due && $vehicle->next_maintenance_due->diffInDays() <= 7)
                                 <div class="alert alert-warning mt-3">
                                     <i class="fas fa-tools"></i>
-                                    <strong>Maintenance Due Soon:</strong> Schedule maintenance within {{ $vehicle->next_maintenance_date->diffInDays() }} days.
+                                    <strong>Maintenance Due Soon:</strong> Schedule maintenance within {{ $vehicle->next_maintenance_due->diffInDays() }} days.
                                 </div>
                             @endif
                         </div>
@@ -305,7 +290,7 @@
             </div>
 
             <!-- Recent Incidents Card -->
-            @if($vehicle->incidents && $vehicle->incidents->count() > 0)
+            @if(isset($deploymentHistory) && $deploymentHistory->count() > 0)
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card shadow">
@@ -325,7 +310,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($vehicle->incidents->take(5) as $incident)
+                                        @foreach($deploymentHistory->take(5) as $incident)
                                             <tr>
                                                 <td>{{ $incident->incident_datetime ? $incident->incident_datetime->format('M d, Y') : 'N/A' }}</td>
                                                 <td>{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $incident->incident_type)) }}</td>
@@ -335,14 +320,14 @@
                                                         @case('pending')
                                                             <span class="badge badge-warning">Pending</span>
                                                             @break
-                                                        @case('in_progress')
-                                                            <span class="badge badge-primary">In Progress</span>
+                                                        @case('responding')
+                                                            <span class="badge badge-primary">Responding</span>
                                                             @break
                                                         @case('resolved')
                                                             <span class="badge badge-success">Resolved</span>
                                                             @break
-                                                        @case('cancelled')
-                                                            <span class="badge badge-secondary">Cancelled</span>
+                                                        @case('closed')
+                                                            <span class="badge badge-secondary">Closed</span>
                                                             @break
                                                     @endswitch
                                                 </td>
@@ -378,7 +363,7 @@
 function updateFuel() {
     $('#fuelModal').modal('show');
     // Pre-populate current fuel level
-    $('#current_fuel_level').val({{ $vehicle->fuel_level }});
+    $('#current_fuel_level').val({{ $vehicle->current_fuel }});
 }
 
 function scheduleMaintenance() {
@@ -388,7 +373,8 @@ function scheduleMaintenance() {
 function updateStatus() {
     $('#statusModal').modal('show');
     // Pre-select current status
-    $('#new_status').val('{{ $vehicle->status }}');
+    $('#newStatus').val('{{ $vehicle->status }}');
+    $('#statusVehicleId').val('{{ $vehicle->id }}');
 }
 
 function confirmDeleteVehicle() {
@@ -433,6 +419,57 @@ function confirmDeleteVehicle() {
         }
     );
 }
+
+// Handle status form submission
+$('#statusForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const vehicleId = $('#statusVehicleId').val();
+    const newStatus = $('#newStatus').val();
+
+    if (!newStatus) {
+        showErrorToast('Please select a status');
+        return;
+    }
+
+    showLoading('Updating status...');
+
+    fetch(`/vehicles/${vehicleId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            status: newStatus
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        closeLoading();
+        if (data.success) {
+            $('#statusModal').modal('hide');
+            showSuccessToast(data.message || 'Status updated successfully');
+            // Reload page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorToast(data.message || 'Update failed');
+        }
+    })
+    .catch(error => {
+        closeLoading();
+        console.error('Status update error:', error);
+        showErrorToast('Update failed: ' + error.message);
+    });
+});
 
 // Auto-refresh status indicators if needed
 setInterval(function() {

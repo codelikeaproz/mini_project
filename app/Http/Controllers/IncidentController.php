@@ -727,11 +727,14 @@ final class IncidentController extends Controller
                 'success' => true,
                 'data' => $incidents->map(function ($incident) {
                     return [
+                        'id' => $incident->id,
                         'lat' => (float) $incident->latitude,
                         'lng' => (float) $incident->longitude,
                         'type' => $incident->incident_type,
                         'severity' => $incident->severity_level,
                         'date' => $incident->incident_datetime->format('Y-m-d H:i:s'),
+                        'location' => $incident->location,
+                        'description' => $incident->description,
                     ];
                 })
             ]);

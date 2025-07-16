@@ -157,6 +157,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // User management (admin only)
         Route::resource('users', UserController::class);
         Route::post('/users/{user}/resend-verification', [UserController::class, 'resendVerification'])->name('users.resend-verification');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin-Only Management Routes
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('admin/management')->name('admin.management.')->group(function () {
+            Route::get('/overview', function () {
+                return view('admin.management.overview');
+            })->name('overview');
+            Route::get('/reports', function () {
+                return view('admin.management.reports');
+            })->name('reports');
+            Route::get('/settings', function () {
+                return view('admin.management.settings');
+            })->name('settings');
+        });
+
     });
 
     /*
@@ -176,70 +194,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Shared Routes (Admin OR Staff Access)
+    | Shared Resource Routes (Admin + Staff with Different Permissions)
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware('role:admin')->group(function () {
+    // Use combined middleware for shared resources
+    Route::middleware('role:admin,mdrrmo_staff')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | Incident Management Routes (Admin - Full Access)
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('incidents', IncidentController::class);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Vehicle Management Routes (Admin - Full Access)
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('vehicles', VehicleController::class);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Victim Management Routes (Admin - Full Access)
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('victims', VictimController::class);
-
-    });
-
-    // Staff gets limited access to the same resources
-    Route::middleware('role:mdrrmo_staff')->group(function () {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Incident Management Routes (Staff - Limited Access)
+        | Incident Management Routes
         |--------------------------------------------------------------------------
         */
         Route::resource('incidents', IncidentController::class)->except(['destroy']);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Vehicle Management Routes (Staff - Read Only)
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('vehicles', VehicleController::class)->only(['index', 'show']);
+        // Admin gets destroy permission
+        Route::middleware('role:admin')->group(function () {
+            Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
+        });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Victim Management Routes (Staff - Limited Access)
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('victims', VictimController::class)->except(['destroy']);
-
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Additional Routes (Both Admin and Staff)
-    |--------------------------------------------------------------------------
-    */
-
-    Route::middleware('role:admin,mdrrmo_staff')->group(function () {
-
-        // Additional incident routes
+        // Shared incident routes for both roles
         Route::prefix('incidents')->name('incidents.')->group(function () {
             Route::patch('/{incident}/status', [IncidentController::class, 'updateStatus'])->name('update-status');
             Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
@@ -248,8 +222,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{incident}/update-field', [IncidentController::class, 'updateField'])->name('update-field');
         });
 
-        // Additional vehicle routes (admin only for destructive operations)
+                /*
+        |--------------------------------------------------------------------------
+        | Vehicle Management Routes
+        |--------------------------------------------------------------------------
+        */
+        // Admin-only vehicle management routes (specific routes first)
         Route::middleware('role:admin')->group(function () {
+            Route::get('/vehicles/create', [VehicleController::class, 'create'])->name('vehicles.create');
+            Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+            Route::get('/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
+            Route::put('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+            Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
             Route::prefix('vehicles')->name('vehicles.')->group(function () {
                 Route::patch('/{vehicle}/status', [VehicleController::class, 'updateStatus'])->name('update-status');
                 Route::patch('/{vehicle}/fuel', [VehicleController::class, 'updateFuel'])->name('update-fuel');
@@ -258,21 +243,76 @@ Route::middleware(['auth', 'verified'])->group(function () {
             });
         });
 
-        // Victim management
+        // Vehicle viewing routes (both admin and staff) - parameterized routes last
+        Route::middleware('role:admin,mdrrmo_staff')->group(function () {
+            Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+            Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Victim Management Routes
+        |--------------------------------------------------------------------------
+        */
+        Route::resource('victims', VictimController::class)->except(['destroy']);
+
+        // Admin gets destroy permission
+        Route::middleware('role:admin')->group(function () {
+            Route::delete('/victims/{victim}', [VictimController::class, 'destroy'])->name('victims.destroy');
+        });
+
+        // Shared victim routes
         Route::prefix('victims')->name('victims.')->group(function () {
             Route::get('/incident/{incident}', [VictimController::class, 'getByIncident'])->name('by-incident');
             Route::get('/{victim}/data', [VictimController::class, 'getVictim'])->name('get-data');
         });
 
-        // Heat Map
+        /*
+        |--------------------------------------------------------------------------
+        | Heat Map (Both Roles)
+        |--------------------------------------------------------------------------
+        */
         Route::get('/heat-map', function () {
             $totalIncidents = \App\Models\Incident::count();
-            return view('heat-map.index', compact('totalIncidents'));
+            $monthlyIncidents = \App\Models\Incident::whereMonth('incident_datetime', now()->month)
+                ->whereYear('incident_datetime', now()->year)
+                ->count();
+
+            // Get incidents with location data for the map
+            $incidents = \App\Models\Incident::select([
+                'id', 'incident_number', 'incident_type', 'location', 'latitude',
+                'longitude', 'severity_level', 'status', 'incident_datetime'
+            ])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->latest('incident_datetime')
+            ->get();
+
+            // Calculate statistics
+            $mappedIncidents = $incidents->count();
+            $hotspots = $incidents->groupBy(function($incident) {
+                // Group by approximate location (rounded coordinates)
+                return round($incident->latitude, 3) . ',' . round($incident->longitude, 3);
+            })->filter(function($group) {
+                return $group->count() >= 2; // Consider hotspot if 2+ incidents in same area
+            })->count();
+
+            // Recent incidents for the table
+            $recentIncidents = $incidents->take(10);
+
+            return view('heat-map.index', compact(
+                'totalIncidents',
+                'monthlyIncidents',
+                'mappedIncidents',
+                'hotspots',
+                'incidents',
+                'recentIncidents'
+            ));
         })->name('heat-map.index');
 
         /*
         |--------------------------------------------------------------------------
-        | API Routes
+        | API Routes (Both Roles)
         |--------------------------------------------------------------------------
         */
 
@@ -297,24 +337,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/heatmap-data', [DashboardController::class, 'getHeatMapData'])->name('heatmap');
             Route::get('/chart-data', [DashboardController::class, 'getChartData'])->name('charts');
         });
+
     });
+
 });
 
-// Debug route for incident victims
-Route::get('/debug/incident/{id}/victims', function($id) {
-    $incident = App\Models\Incident::findOrFail($id);
-    $victims = $incident->victims;
+// // Debug route for incident victims
+// Route::get('/debug/incident/{id}/victims', function($id) {
+//     $incident = App\Models\Incident::findOrFail($id);
+//     $victims = $incident->victims;
 
-    return response()->json([
-        'incident_id' => $id,
-        'victims_count' => $victims->count(),
-        'victims' => $victims->map(function($victim) {
-            return [
-                'id' => $victim->id,
-                'name' => $victim->full_name,
-                'involvement_type' => $victim->involvement_type,
-                'injury_status' => $victim->injury_status
-            ];
-        })
-    ]);
-})->middleware(['auth', 'verified']);
+//     return response()->json([
+//         'incident_id' => $id,
+//         'victims_count' => $victims->count(),
+//         'victims' => $victims->map(function($victim) {
+//             return [
+//                 'id' => $victim->id,
+//                 'name' => $victim->full_name,
+//                 'involvement_type' => $victim->involvement_type,
+//                 'injury_status' => $victim->injury_status
+//             ];
+//         })
+//     ]);
+// })->middleware(['auth', 'verified']);
+
+

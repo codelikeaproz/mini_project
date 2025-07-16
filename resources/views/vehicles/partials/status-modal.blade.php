@@ -6,7 +6,9 @@
                 <h5 class="modal-title" id="statusModalLabel">
                     <i class="fas fa-exchange-alt me-2"></i>Update Vehicle Status
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <form id="statusForm">
                 <div class="modal-body">
@@ -14,7 +16,7 @@
 
                     <div class="mb-3">
                         <label for="newStatus" class="form-label">New Status</label>
-                        <select class="form-select" id="newStatus" required>
+                        <select class="form-control" id="newStatus" required>
                             <option value="">Select Status</option>
                             <option value="available">Available</option>
                             <option value="deployed">Deployed</option>
@@ -34,7 +36,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Update Status
                     </button>

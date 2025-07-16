@@ -1,36 +1,46 @@
 @extends('layouts.app')
 
-@section('title', 'Vehicle Management - MDRRMO')
+@section('title', 'Vehicle Management - MDRRMO Maramag')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">Vehicle Management</h1>
-            <p class="text-muted">Manage MDRRMO emergency response fleet</p>
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header with Emergency Response Styling -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="fas fa-truck text-primary fs-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="h4 mb-1 text-dark fw-bold">Fleet Management</h1>
+                    <p class="text-muted mb-0 small">Manage MDRRMO emergency response vehicles</p>
+                </div>
+            </div>
         </div>
-        @can('admin')
-        <a href="{{ route('vehicles.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Add New Vehicle
-        </a>
-        @endcan
+        <div class="col-auto">
+            @can('admin')
+            <a href="{{ route('vehicles.create') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>Add Vehicle
+            </a>
+            @endcan
+        </div>
     </div>
-
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Fleet
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-truck fa-lg text-primary"></i>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['total'] }}</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-truck fa-2x text-gray-300"></i>
+                        <div class="flex-grow-1">
+                            <h3 class="fw-bold text-dark mb-1">{{ $statistics['total'] }}</h3>
+                            <p class="text-muted small mb-0">Total Fleet</p>
                         </div>
                     </div>
                 </div>
@@ -38,17 +48,17 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Available
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-check-circle fa-lg text-success"></i>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['available'] }}</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        <div class="flex-grow-1">
+                            <h3 class="fw-bold text-dark mb-1">{{ $statistics['available'] }}</h3>
+                            <p class="text-muted small mb-0">Available</p>
                         </div>
                     </div>
                 </div>
@@ -56,17 +66,17 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Deployed
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-road fa-lg text-warning"></i>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['deployed'] }}</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-road fa-2x text-gray-300"></i>
+                        <div class="flex-grow-1">
+                            <h3 class="fw-bold text-dark mb-1">{{ $statistics['deployed'] }}</h3>
+                            <p class="text-muted small mb-0">Deployed</p>
                         </div>
                     </div>
                 </div>
@@ -74,17 +84,17 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Maintenance
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-tools fa-lg text-info"></i>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['maintenance'] }}</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-tools fa-2x text-gray-300"></i>
+                        <div class="flex-grow-1">
+                            <h3 class="fw-bold text-dark mb-1">{{ $statistics['maintenance'] }}</h3>
+                            <p class="text-muted small mb-0">Maintenance</p>
                         </div>
                     </div>
                 </div>
@@ -94,12 +104,17 @@
 
     <!-- Attention Required Panel -->
     @if($attention['maintenance']->count() > 0 || $attention['low_fuel']->count() > 0)
-    <div class="alert alert-warning" role="alert">
-        <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Vehicles Requiring Attention</h6>
+    <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center mb-2">
+            <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <h6 class="alert-heading mb-0 text-dark">Vehicles Requiring Attention</h6>
+        </div>
 
         @if($attention['maintenance']->count() > 0)
         <div class="mb-2">
-            <strong>Maintenance Due/Overdue ({{ $attention['maintenance']->count() }}):</strong>
+            <strong class="text-dark">Maintenance Due/Overdue ({{ $attention['maintenance']->count() }}):</strong>
             @foreach($attention['maintenance'] as $vehicle)
                 <span class="badge bg-warning text-dark me-1">{{ $vehicle->vehicle_number }}</span>
             @endforeach
@@ -108,7 +123,7 @@
 
         @if($attention['low_fuel']->count() > 0)
         <div class="mb-0">
-            <strong>Low Fuel ({{ $attention['low_fuel']->count() }}):</strong>
+            <strong class="text-dark">Low Fuel ({{ $attention['low_fuel']->count() }}):</strong>
             @foreach($attention['low_fuel'] as $vehicle)
                 <span class="badge bg-danger me-1">{{ $vehicle->vehicle_number }} ({{ number_format($vehicle->fuel_percentage, 1) }}%)</span>
             @endforeach
@@ -118,22 +133,24 @@
     @endif
 
     <!-- Filters and Search -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Fleet Management</h6>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0 text-dark">
+                <i class="fas fa-filter me-2 text-primary"></i>Fleet Management
+            </h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <!-- Filter Form -->
             <form method="GET" class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <label for="search" class="form-label">Search</label>
+                    <label for="search" class="form-label text-muted small fw-medium">Search</label>
                     <input type="text" class="form-control" id="search" name="search"
                            value="{{ $filters['search'] }}"
                            placeholder="Vehicle number, type, plate...">
                 </div>
 
                 <div class="col-md-2">
-                    <label for="type" class="form-label">Vehicle Type</label>
+                    <label for="type" class="form-label text-muted small fw-medium">Vehicle Type</label>
                     <select class="form-select" id="type" name="type">
                         <option value="">All Types</option>
                         <option value="ambulance" {{ $filters['type'] === 'ambulance' ? 'selected' : '' }}>Ambulance</option>
@@ -146,7 +163,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label for="status" class="form-label">Status</label>
+                    <label for="status" class="form-label text-muted small fw-medium">Status</label>
                     <select class="form-select" id="status" name="status">
                         <option value="">All Status</option>
                         <option value="available" {{ $filters['status'] === 'available' ? 'selected' : '' }}>Available</option>
@@ -157,7 +174,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label for="operational" class="form-label">Operational</label>
+                    <label for="operational" class="form-label text-muted small fw-medium">Operational</label>
                     <select class="form-select" id="operational" name="operational">
                         <option value="">All</option>
                         <option value="1" {{ $filters['operational'] === true ? 'selected' : '' }}>Operational</option>
@@ -177,34 +194,59 @@
 
             <!-- Vehicles Table -->
             <div class="table-responsive">
-                <table class="table table-bordered" id="vehiclesTable">
-                    <thead>
+                <table class="table table-hover mb-0" id="vehiclesTable">
+                    <thead class="bg-light">
                         <tr>
-                            <th>Vehicle #</th>
-                            <th>Type</th>
-                            <th>Make/Model</th>
-                            <th>Plate Number</th>
-                            <th>Status</th>
-                            <th>Fuel Level</th>
-                            <th>Capacity</th>
-                            <th>Last Maintenance</th>
-                            <th>Actions</th>
+                            <th class="border-0 text-muted small fw-medium px-3 py-3">Vehicle #</th>
+                            <th class="border-0 text-muted small fw-medium">Type</th>
+                            <th class="border-0 text-muted small fw-medium">Make/Model</th>
+                            <th class="border-0 text-muted small fw-medium">Plate Number</th>
+                            <th class="border-0 text-muted small fw-medium">Assigned Driver</th>
+                            <th class="border-0 text-muted small fw-medium">Status</th>
+                            <th class="border-0 text-muted small fw-medium">Fuel Level</th>
+                            <th class="border-0 text-muted small fw-medium">Capacity</th>
+                            <th class="border-0 text-muted small fw-medium text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($vehicles as $vehicle)
-                        <tr>
-                            <td>
-                                <a href="{{ route('vehicles.show', $vehicle->id) }}" class="text-decoration-none">
-                                    <strong>{{ $vehicle->vehicle_number }}</strong>
+                        <tr class="border-bottom">
+                            <td class="px-3 py-3">
+                                <a href="{{ route('vehicles.show', $vehicle->id) }}" class="text-decoration-none fw-medium text-dark">
+                                    {{ $vehicle->vehicle_number }}
                                 </a>
                             </td>
-                            <td>
-                                <span class="badge bg-secondary">{{ str_replace('_', ' ', ucwords($vehicle->vehicle_type, '_')) }}</span>
+                            <td class="py-3">
+                                @php
+                                    $typeColors = [
+                                        'ambulance' => 'bg-danger',
+                                        'fire_truck' => 'bg-warning',
+                                        'rescue_vehicle' => 'bg-info',
+                                        'patrol_car' => 'bg-primary',
+                                        'motorcycle' => 'bg-success',
+                                        'emergency_van' => 'bg-secondary'
+                                    ];
+                                    $typeColor = $typeColors[$vehicle->vehicle_type] ?? 'bg-secondary';
+                                @endphp
+                                <span class="badge {{ $typeColor }} bg-opacity-10 text-dark border border-{{ str_replace('bg-', '', $typeColor) }} border-opacity-25">
+                                    {{ str_replace('_', ' ', ucwords($vehicle->vehicle_type, '_')) }}
+                                </span>
                             </td>
-                            <td>{{ $vehicle->make_model }} ({{ $vehicle->year }})</td>
-                            <td>{{ $vehicle->plate_number }}</td>
-                            <td>
+                            <td class="py-3">
+                                <div class="text-dark small">{{ $vehicle->make_model }}</div>
+                                <div class="text-muted small">({{ $vehicle->year }})</div>
+                            </td>
+                            <td class="py-3">
+                                <span class="fw-medium text-dark">{{ $vehicle->plate_number }}</span>
+                            </td>
+                            <td class="py-3">
+                                @if($vehicle->assigned_driver_name)
+                                    <div class="small text-dark">{{ $vehicle->assigned_driver_name }}</div>
+                                @else
+                                    <span class="text-muted small">Unassigned</span>
+                                @endif
+                            </td>
+                            <td class="py-3">
                                 <span class="status-badge-{{ $vehicle->id }}
                                     @switch($vehicle->status)
                                         @case('available') badge bg-success @break
@@ -216,7 +258,7 @@
                                     {{ ucwords(str_replace('_', ' ', $vehicle->status)) }}
                                 </span>
                             </td>
-                            <td>
+                            <td class="py-3">
                                 <div class="fuel-info-{{ $vehicle->id }}">
                                     @php
                                         $fuelPercentage = $vehicle->fuel_percentage;
@@ -224,99 +266,97 @@
                                                    ($fuelPercentage >= 50 ? 'text-warning' :
                                                    ($fuelPercentage >= 25 ? 'text-warning' : 'text-danger'));
                                     @endphp
-                                    <span class="fuel-percentage-{{ $vehicle->id }} {{ $fuelClass }}">
-                                        {{ number_format($fuelPercentage, 1) }}%
-                                    </span>
-                                    <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar fuel-bar-{{ $vehicle->id }}
-                                            @if($fuelPercentage >= 75) bg-success
-                                            @elseif($fuelPercentage >= 50) bg-warning
-                                            @elseif($fuelPercentage >= 25) bg-warning
-                                            @else bg-danger @endif"
-                                             style="width: {{ $fuelPercentage }}%">
+                                    <div class="d-flex align-items-center">
+                                        <span class="fuel-percentage-{{ $vehicle->id }} {{ $fuelClass }} small fw-medium me-2">
+                                            {{ number_format($fuelPercentage, 1) }}%
+                                        </span>
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar fuel-bar-{{ $vehicle->id }}
+                                                @if($fuelPercentage >= 75) bg-success
+                                                @elseif($fuelPercentage >= 50) bg-warning
+                                                @elseif($fuelPercentage >= 25) bg-warning
+                                                @else bg-danger @endif"
+                                                 style="width: {{ $fuelPercentage }}%">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ $vehicle->capacity }} persons</td>
-                            <td>
-                                @if($vehicle->last_maintenance)
-                                                                            {{ $vehicle->last_maintenance_date ? $vehicle->last_maintenance_date->format('M d, Y') : 'Not scheduled' }}
-                                @else
-                                    <span class="text-muted">Not recorded</span>
-                                @endif
+                            <td class="py-3">
+                                <span class="text-dark small">{{ $vehicle->capacity }} persons</span>
                             </td>
-                            <td>
-                                <div class="btn-group" role="group">
+                            <td class="py-3 text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View Button -->
                                     <a href="{{ route('vehicles.show', $vehicle->id) }}"
-                                       class="btn btn-sm btn-outline-primary" title="View Details">
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
 
                                     @can('admin')
+                                    <!-- Edit Button -->
                                     <a href="{{ route('vehicles.edit', $vehicle->id) }}"
-                                       class="btn btn-sm btn-outline-warning" title="Edit Vehicle">
+                                       class="btn btn-outline-secondary btn-sm"
+                                       title="Edit Vehicle">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    @endcan
 
-                                    <!-- Quick Actions Dropdown -->
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                data-bs-toggle="dropdown" title="Quick Actions">
-                                            <i class="fas fa-cog"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $vehicle->id }})">
-                                                <i class="fas fa-exchange-alt me-2"></i>Update Status
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateFuel({{ $vehicle->id }})">
-                                                <i class="fas fa-gas-pump me-2"></i>Update Fuel
-                                            </a></li>
-                                            @if($vehicle->status !== 'maintenance')
-                                            <li><a class="dropdown-item" href="#" onclick="scheduleMaintenance({{ $vehicle->id }})">
-                                                <i class="fas fa-calendar-plus me-2"></i>Schedule Maintenance
-                                            </a></li>
-                                            @else
-                                            <li><a class="dropdown-item" href="#" onclick="completeMaintenance({{ $vehicle->id }})">
-                                                <i class="fas fa-check-circle me-2"></i>Complete Maintenance
-                                            </a></li>
-                                            @endif
-                                            @can('admin')
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteVehicle({{ $vehicle->id }}, '{{ $vehicle->vehicle_number }}')">
-                                                <i class="fas fa-trash me-2"></i>Delete Vehicle
-                                            </a></li>
-                                            @endcan
-                                        </ul>
-                                    </div>
+                                    <!-- Status Button -->
+                                    <button type="button"
+                                            class="btn btn-outline-info btn-sm"
+                                            title="Update Status"
+                                            onclick="updateStatus('{{ $vehicle->id }}', '{{ $vehicle->vehicle_number }}', '{{ $vehicle->status }}')">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+
+                                    <!-- Fuel Button -->
+                                    <button type="button"
+                                            class="btn btn-outline-warning btn-sm"
+                                            title="Update Fuel"
+                                            onclick="updateFuel('{{ $vehicle->id }}', '{{ $vehicle->vehicle_number }}', {{ $vehicle->current_fuel }}, {{ $vehicle->fuel_capacity }})">
+                                        <i class="fas fa-gas-pump"></i>
+                                    </button>
+
+                                    <!-- Maintenance Button -->
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm"
+                                            title="Maintenance Log"
+                                            onclick="logMaintenance('{{ $vehicle->id }}', '{{ $vehicle->vehicle_number }}')">
+                                        <i class="fas fa-wrench"></i>
+                                    </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center py-4">
-                                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No vehicles found matching your criteria.</p>
-                                @can('admin')
-                                <a href="{{ route('vehicles.create') }}" class="btn btn-primary">
-                                    <i class="fas fa-plus me-2"></i>Add First Vehicle
-                                </a>
-                                @endcan
+                            <td colspan="9" class="text-center py-5">
+                                <div class="bg-light rounded-circle p-4 d-inline-flex mb-3">
+                                    <i class="fas fa-truck fa-2x text-muted"></i>
+                                </div>
+                                <h6 class="text-muted">No vehicles found</h6>
+                                <p class="text-muted small mb-0">Try adjusting your search filters or add a new vehicle.</p>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <!-- Pagination -->
-            @if($vehicles->hasPages())
-            <div class="d-flex justify-content-center">
-                {{ $vehicles->appends(request()->query())->links() }}
-            </div>
-            @endif
         </div>
+
+        @if($vehicles->hasPages())
+        <div class="card-footer bg-light border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing {{ $vehicles->firstItem() }} to {{ $vehicles->lastItem() }} of {{ $vehicles->total() }} vehicles
+                </div>
+                <div>
+                    {{ $vehicles->appends(request()->query())->links() }}
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -333,30 +373,37 @@
 @section('scripts')
 <script>
 // Vehicle status update function
-function updateStatus(vehicleId) {
+function updateStatus(vehicleId, vehicleNumber, currentStatus) {
     const modal = new bootstrap.Modal(document.getElementById('statusModal'));
     document.getElementById('statusVehicleId').value = vehicleId;
+    document.getElementById('currentStatus').value = currentStatus;
+    document.getElementById('vehicleNumber').textContent = vehicleNumber;
     modal.show();
 }
 
 // Vehicle fuel update function
-function updateFuel(vehicleId) {
+function updateFuel(vehicleId, vehicleNumber, currentFuel, fuelCapacity) {
     const modal = new bootstrap.Modal(document.getElementById('fuelModal'));
     document.getElementById('fuelVehicleId').value = vehicleId;
+    document.getElementById('currentFuel').value = currentFuel;
+    document.getElementById('fuelCapacity').value = fuelCapacity;
+    document.getElementById('vehicleNumber').textContent = vehicleNumber;
     modal.show();
 }
 
 // Schedule maintenance function
-function scheduleMaintenance(vehicleId) {
+function scheduleMaintenance(vehicleId, vehicleNumber) {
     const modal = new bootstrap.Modal(document.getElementById('maintenanceModal'));
     document.getElementById('maintenanceVehicleId').value = vehicleId;
+    document.getElementById('vehicleNumber').textContent = vehicleNumber;
     modal.show();
 }
 
 // Complete maintenance function
-function completeMaintenance(vehicleId) {
+function completeMaintenance(vehicleId, vehicleNumber) {
     const modal = new bootstrap.Modal(document.getElementById('completeMaintenanceModal'));
     document.getElementById('completeMaintenanceVehicleId').value = vehicleId;
+    document.getElementById('vehicleNumber').textContent = vehicleNumber;
     modal.show();
 }
 

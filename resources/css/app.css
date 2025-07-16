@@ -1,11 +1,33 @@
 @import 'tailwindcss';
-@plugin "daisyui" {
-    themes: corporate --default;
-}
+@plugin "daisyui";
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+
+/* DaisyUI MDRRMO Theme Override */
+[data-theme="mdrrmo"] {
+    --p: 107 118 113;
+    --pc: 255 255 255;
+    --s: 156 168 163;
+    --sc: 255 255 255;
+    --a: 203 213 209;
+    --ac: 47 56 51;
+    --n: 74 79 74;
+    --nc: 255 255 255;
+    --b1: 250 251 251;
+    --b2: 244 246 245;
+    --b3: 233 236 233;
+    --bc: 47 56 51;
+    --in: 59 130 246;
+    --inc: 255 255 255;
+    --su: 34 197 94;
+    --suc: 255 255 255;
+    --wa: 245 158 11;
+    --wac: 255 255 255;
+    --er: 239 68 68;
+    --erc: 255 255 255;
+}
 
 /* MDRRMO Professional Monotone Color System */
 :root {
@@ -67,7 +89,7 @@
     --shadow-lg: 0 10px 15px -3px rgba(107, 118, 113, 0.1), 0 4px 6px -4px rgba(107, 118, 113, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(107, 118, 113, 0.1), 0 8px 10px -6px rgba(107, 118, 113, 0.05);
 
-    
+
     /* Legacy color variables for compatibility - all using monotone palette */
     --soft-green: var(--primary-500);
     --soft-green-light: var(--primary-100);

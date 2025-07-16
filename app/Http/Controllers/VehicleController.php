@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Vehicle;
 use App\Models\Incident;
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -102,7 +103,7 @@ final class VehicleController extends Controller
         }
     }
 
-    /**
+        /**
      * Show form for creating new vehicle
      */
     public function create(): View
@@ -129,6 +130,7 @@ final class VehicleController extends Controller
             'current_fuel' => 'nullable|numeric|min:0',
             'odometer_reading' => 'nullable|integer|min:0',
             'equipment_list' => 'nullable|string',
+            'assigned_driver_name' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -171,7 +173,7 @@ final class VehicleController extends Controller
     /**
      * Display specific vehicle
      */
-    public function show(int $id): View
+    public function show($id): View|RedirectResponse
     {
         try {
             $vehicle = Vehicle::findOrFail($id);
@@ -189,13 +191,14 @@ final class VehicleController extends Controller
         }
     }
 
-    /**
+        /**
      * Show form for editing vehicle
      */
-    public function edit(int $id): View
+    public function edit($id): View
     {
         try {
             $vehicle = Vehicle::findOrFail($id);
+
             return view('vehicles.edit', [
                 'vehicle' => $vehicle,
                 'vehicleTypes' => Vehicle::VEHICLE_TYPES,
@@ -209,26 +212,55 @@ final class VehicleController extends Controller
     /**
      * Update vehicle
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, $id): RedirectResponse
     {
-        $vehicle = Vehicle::findOrFail($id);
-
-        $validated = $request->validate([
-            'vehicle_number' => 'required|string|max:50|unique:vehicles,vehicle_number,' . $id,
-            'vehicle_type' => 'required|in:' . implode(',', array_keys(Vehicle::VEHICLE_TYPES)),
-            'make_model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
-            'plate_number' => 'required|string|max:20|unique:vehicles,plate_number,' . $id,
-            'capacity' => 'required|integer|min:1',
-            'fuel_capacity' => 'required|numeric|min:0',
-            'current_fuel' => 'nullable|numeric|min:0',
-            'odometer_reading' => 'nullable|integer|min:0',
-            'equipment_list' => 'nullable|string',
-            'is_operational' => 'boolean',
-        ]);
-
         try {
+            $vehicle = Vehicle::findOrFail($id);
+
+            // Custom validation rules for dates
+            $validationRules = [
+                'vehicle_number' => 'required|string|max:50|unique:vehicles,vehicle_number,' . $id,
+                'vehicle_type' => 'required|in:' . implode(',', array_keys(Vehicle::VEHICLE_TYPES)),
+                'make_model' => 'required|string|max:100',
+                'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
+                'plate_number' => 'required|string|max:20|unique:vehicles,plate_number,' . $id,
+                'capacity' => 'required|integer|min:1',
+                'fuel_capacity' => 'required|numeric|min:0',
+                'current_fuel' => 'nullable|numeric|min:0',
+                'odometer_reading' => 'nullable|integer|min:0',
+                'equipment_list' => 'nullable|string|max:1000',
+                'is_operational' => 'sometimes|boolean',
+                'status' => 'sometimes|in:available,deployed,maintenance,out_of_service',
+                'last_maintenance' => 'nullable|date',
+                'next_maintenance_due' => 'nullable|date',
+                'assigned_driver_name' => 'nullable|string|max:100',
+            ];
+
+            // Only validate future date if it's actually being changed
+            if ($request->filled('next_maintenance_due') &&
+                $request->input('next_maintenance_due') !== $vehicle->next_maintenance_due?->format('Y-m-d')) {
+                $validationRules['next_maintenance_due'] = 'nullable|date|after:today';
+            }
+
+            $validated = $request->validate($validationRules);
+
             DB::beginTransaction();
+
+            // Handle boolean fields properly
+            $validated['is_operational'] = $request->has('is_operational') ? true : false;
+
+            // Ensure current fuel doesn't exceed capacity
+            if (isset($validated['current_fuel']) && isset($validated['fuel_capacity'])) {
+                if ($validated['current_fuel'] > $validated['fuel_capacity']) {
+                    return back()
+                        ->withInput()
+                        ->with('error', 'Current fuel level cannot exceed fuel capacity.');
+                }
+            }
+
+            // Set default values for nullable fields
+            $validated['current_fuel'] = $validated['current_fuel'] ?? 0;
+            $validated['odometer_reading'] = $validated['odometer_reading'] ?? 0;
 
             $oldValues = $vehicle->toArray();
             $vehicle->update($validated);
@@ -251,6 +283,7 @@ final class VehicleController extends Controller
             return redirect()
                 ->route('vehicles.show', $vehicle->id)
                 ->with('success', "Vehicle {$vehicle->vehicle_number} updated successfully!");
+
         } catch (Exception $e) {
             DB::rollBack();
             return back()
@@ -262,7 +295,7 @@ final class VehicleController extends Controller
     /**
      * Delete vehicle
      */
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, $id)
     {
         try {
             $vehicle = Vehicle::findOrFail($id);
@@ -315,7 +348,7 @@ final class VehicleController extends Controller
     /**
      * AJAX: Update vehicle status
      */
-    public function updateStatus(Request $request, int $id): JsonResponse
+    public function updateStatus(Request $request, $id): JsonResponse
     {
         try {
             $request->validate([

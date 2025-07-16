@@ -1,128 +1,269 @@
 @extends('layouts.app')
 
-@section('title', 'Victim Management')
+@section('title', 'Victim Management - MDRRMO Maramag')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Victim Management</h1>
-                <div class="d-sm-flex">
-                    <a href="{{ route('victims.create') }}" class="btn btn-primary shadow-sm">
-                        <i class="fas fa-plus fa-sm text-white-50"></i> Add New Victim
-                    </a>
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="fas fa-user-injured text-primary fs-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="h4 mb-1 text-dark fw-bold">Victim Management</h1>
+                    <p class="text-muted mb-0 small">Track and manage emergency victims and their medical status</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <a href="{{ route('victims.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Add New Victim
+            </a>
                 </div>
             </div>
 
+    <!-- Flash Messages -->
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Statistics Cards -->
+    @if(isset($stats))
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Total Victims</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $stats['total'] ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-ambulance text-danger"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Critical Condition</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $stats['critical'] ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-hospital text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Hospitalized</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $stats['hospitalized'] ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-heart text-success"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">Stable/Recovered</div>
+                            <div class="h5 mb-0 fw-bold text-dark">{{ $stats['stable'] ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Victims Data Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-dark fw-medium"><i class="fas fa-table me-2"></i>All Victims</h6>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshTable()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
                     </button>
                 </div>
-            @endif
-
-            <!-- DataTables Card -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">All Victims</h6>
+            </div>
                 </div>
                 <div class="card-body">
                     @if($victims->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Age</th>
-                                        <th>Gender</th>
-                                        <th>Incident</th>
-                                        <th>Injury Status</th>
-                                        <th>Medical Attention</th>
-                                        <th>Date Recorded</th>
-                                        <th>Actions</th>
+                    <table class="table table-hover table-sm mb-0" id="victimsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0 text-muted small fw-medium">Name</th>
+                                <th class="border-0 text-muted small fw-medium">Age</th>
+                                <th class="border-0 text-muted small fw-medium">Gender</th>
+                                <th class="border-0 text-muted small fw-medium">Incident</th>
+                                <th class="border-0 text-muted small fw-medium">Involvement</th>
+                                <th class="border-0 text-muted small fw-medium">Injury Status</th>
+                                <th class="border-0 text-muted small fw-medium">Hospital</th>
+                                <th class="border-0 text-muted small fw-medium">Contact</th>
+                                <th class="border-0 text-muted small fw-medium">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($victims as $victim)
                                         <tr>
                                             <td>
-                                                <strong>{{ $victim->name }}</strong>
-                                                @if($victim->contact_number)
-                                                    <br><small class="text-muted">{{ $victim->contact_number }}</small>
-                                                @endif
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2">
+                                            <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user text-secondary small"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium text-dark">{{ $victim->first_name }} {{ $victim->last_name }}</div>
+                                        </div>
+                                    </div>
                                             </td>
-                                            <td>{{ $victim->age }} years</td>
+                                <td class="text-muted">{{ $victim->age ?? 'N/A' }}</td>
                                             <td>
-                                                <span class="badge badge-secondary">
-                                                    {{ ucfirst($victim->gender) }}
-                                                </span>
+                                                @if($victim->gender)
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                        {{ ucfirst($victim->gender) }}
+                                                    </span>
+                                                @else
+                                        <span class="text-muted small">N/A</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 @if($victim->incident)
-                                                    <a href="{{ route('incidents.show', $victim->incident->id) }}" class="text-primary">
-                                                        <strong>{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $victim->incident->incident_type)) }}</strong>
-                                                        <br><small class="text-muted">{{ $victim->incident->location }}</small>
+                                        <a href="{{ route('incidents.show', $victim->incident) }}" class="text-decoration-none">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                {{ $victim->incident->incident_number }}
+                                            </span>
                                                     </a>
                                                 @else
-                                                    <span class="text-muted">Incident Deleted</span>
+                                        <span class="text-muted small">No incident</span>
                                                 @endif
                                             </td>
+                                <td>
+                                    <span class="badge bg-info bg-opacity-10 text-info">
+                                        {{ ucwords(str_replace('_', ' ', $victim->involvement_type)) }}
+                                    </span>
+                                </td>
                                             <td>
                                                 @switch($victim->injury_status)
-                                                    @case('uninjured')
-                                                        <span class="badge badge-success">Uninjured</span>
+                                                    @case('none')
+                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                <i class="fas fa-check-circle me-1"></i>No Injury
+                                            </span>
                                                         @break
                                                     @case('minor_injury')
-                                                        <span class="badge badge-warning">Minor Injury</span>
+                                            <span class="badge bg-warning bg-opacity-10 text-warning">
+                                                <i class="fas fa-band-aid me-1"></i>Minor Injury
+                                            </span>
                                                         @break
-                                                    @case('major_injury')
-                                                        <span class="badge badge-danger">Major Injury</span>
+                                                    @case('serious_injury')
+                                            <span class="badge bg-danger bg-opacity-10 text-danger">
+                                                <i class="fas fa-user-injured me-1"></i>Serious Injury
+                                            </span>
                                                         @break
-                                                    @case('critical')
-                                                        <span class="badge badge-dark">Critical</span>
+                                                    @case('critical_condition')
+                                            <span class="badge bg-danger text-white">
+                                                <i class="fas fa-heartbeat me-1"></i>Critical
+                                            </span>
+                                            @break
+                                        @case('fatal')
+                                            <span class="badge bg-dark text-white">
+                                                <i class="fas fa-cross me-1"></i>Fatal
+                                            </span>
                                                         @break
-                                                    @case('deceased')
-                                                        <span class="badge badge-secondary">Deceased</span>
+                                                    @case('in_labor')
+                                            <span class="badge bg-info bg-opacity-10 text-info">
+                                                <i class="fas fa-baby me-1"></i>In Labor
+                                            </span>
+                                                        @break
+                                                    @case('gunshot_wound')
+                                            <span class="badge bg-danger text-white">
+                                                <i class="fas fa-bullseye me-1"></i>Gunshot
+                                            </span>
+                                                        @break
+                                                    @case('stab_wound')
+                                            <span class="badge bg-danger text-white">
+                                                <i class="fas fa-cut me-1"></i>Stab Wound
+                                            </span>
                                                         @break
                                                     @default
-                                                        <span class="badge badge-light">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $victim->injury_status)) }}</span>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                {{ ucwords(str_replace('_', ' ', $victim->injury_status)) }}
+                                            </span>
                                                 @endswitch
                                             </td>
                                             <td>
-                                                @if($victim->medical_attention_required)
-                                                    <span class="badge badge-danger">Required</span>
-                                                    @if($victim->hospital_name)
-                                                        <br><small class="text-muted">{{ $victim->hospital_name }}</small>
-                                                    @endif
+                                                @if($victim->hospital_referred)
+                                        <div class="text-dark fw-medium">{{ $victim->hospital_referred }}</div>
+                                        @if($victim->hospital_arrival_time)
+                                            <small class="text-muted">{{ \Carbon\Carbon::parse($victim->hospital_arrival_time)->format('M j, Y g:i A') }}</small>
+                                        @endif
+                                    @else
+                                        <span class="text-muted small">Not referred</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($victim->contact_number)
+                                        <a href="tel:{{ $victim->contact_number }}" class="text-decoration-none">
+                                            <i class="fas fa-phone text-success me-1"></i>{{ $victim->contact_number }}
+                                        </a>
                                                 @else
-                                                    <span class="badge badge-secondary">Not Required</span>
+                                        <span class="text-muted small">No contact</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $victim->created_at->format('M d, Y H:i') }}</td>
                                             <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="{{ route('victims.show', $victim->id) }}"
-                                                       class="btn btn-sm btn-info" title="View Details">
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('victims.show', $victim) }}" class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('victims.edit', $victim->id) }}"
-                                                       class="btn btn-sm btn-warning" title="Edit Victim">
+                                        <a href="{{ route('victims.edit', $victim) }}" class="btn btn-outline-secondary btn-sm">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button type="button" class="btn btn-sm btn-danger"
-                                                            onclick="confirmDelete({{ $victim->id }})" title="Delete Victim">
+                                        <button class="btn btn-outline-danger btn-sm" onclick="deleteVictim({{ $victim->id }})">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -134,85 +275,110 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="d-flex justify-content-center">
+                @if($victims->hasPages())
+                    <div class="d-flex justify-content-center mt-4">
                             {{ $victims->links() }}
                         </div>
+                @endif
                     @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-users fa-3x text-gray-300 mb-3"></i>
-                            <p class="text-gray-500">No victims recorded yet.</p>
+                <div class="text-center py-5">
+                    <i class="fas fa-user-injured text-muted" style="font-size: 4rem; opacity: 0.5;"></i>
+                    <h5 class="text-muted mt-3">No Victims Found</h5>
+                    <p class="text-muted">No victim records have been created yet.</p>
                             <a href="{{ route('victims.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add First Victim
+                        <i class="fas fa-plus me-1"></i>Add First Victim
                             </a>
                         </div>
                     @endif
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Delete functionality now handled by SweetAlert2 -->
-@endsection
-
-@push('scripts')
 <script>
-function confirmDelete(victimId) {
-    // Get victim name from the table row
-    const victimRow = document.querySelector(`button[onclick="confirmDelete(${victimId})"]`).closest('tr');
-    const victimName = victimRow.querySelector('td:first-child').textContent.trim();
-
-    showDeleteConfirmation(
-        'Delete Victim Record',
-        'Are you sure you want to delete this victim record?',
-        victimName,
-        'Yes, Delete Record',
-        function() {
-            showLoading('Deleting victim record...');
-
-            fetch(`/victims/${victimId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                closeLoading();
-                if (data.success) {
-                    showSuccessToast(data.message || 'Victim record deleted successfully');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    showErrorToast(data.message || 'Delete failed');
-                }
-            })
-            .catch(error => {
-                closeLoading();
-                console.error('Delete error:', error);
-                showErrorToast('Delete failed: ' + error.message);
-            });
-        }
-    );
+// Export to Excel function
+function exportToExcel() {
+    // Implementation for Excel export
+    showAlert('Export functionality coming soon', 'info');
 }
 
-// Initialize DataTable if there are records
-@if($victims->count() > 0)
-$(document).ready(function() {
-    $('#dataTable').DataTable({
-        "order": [[ 6, "desc" ]],
-        "pageLength": 25,
-        "responsive": true
+// Refresh table function
+function refreshTable() {
+    window.location.reload();
+}
+
+// Delete victim function
+function deleteVictim(victimId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create form and submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/victims/${victimId}`;
+
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = '{{ csrf_token() }}';
+
+            form.appendChild(methodInput);
+            form.appendChild(tokenInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any tooltips if needed
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
     });
 });
-@endif
 </script>
+
+@push('styles')
+<style>
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.badge {
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.btn-sm {
+    border-radius: 4px;
+}
+
+.card {
+    transition: all 0.2s ease;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.pagination {
+    --bs-pagination-color: #6c757d;
+    --bs-pagination-hover-color: #0d6efd;
+    --bs-pagination-hover-bg: rgba(13, 110, 253, 0.1);
+}
+</style>
 @endpush

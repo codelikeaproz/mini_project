@@ -162,6 +162,26 @@
                             </div>
                         </div>
 
+                        <!-- Assignment & Assignment -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Driver Assignment</h6>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="assigned_driver_name" class="form-label">Assigned Driver</label>
+                                <input type="text"
+                                       class="form-control @error('assigned_driver_name') is-invalid @enderror"
+                                       id="assigned_driver_name" name="assigned_driver_name"
+                                       value="{{ old('assigned_driver_name') }}"
+                                       placeholder="e.g., Officer Juan Santos">
+                                @error('assigned_driver_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Name of the primary driver responsible for this vehicle (optional)</div>
+                            </div>
+                        </div>
+
                         <!-- Equipment & Additional Information -->
                         <div class="row mb-4">
                             <div class="col-12">

@@ -226,7 +226,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-users me-2"></i>People Involved</h5>
-                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()" data-bs-toggle="modal" data-bs-target="#victimModal">
                         <i class="fas fa-user-plus me-2"></i>Add Person
                     </button>
                 </div>
@@ -350,12 +350,12 @@
 </div>
 
 <!-- Add/Edit Victim Modal -->
-<div class="modal fade" id="victimModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="victimModal" tabindex="-1" role="dialog" aria-labelledby="victimModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Person</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="victimModalLabel">Add Person</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="victimForm">
@@ -537,11 +537,30 @@ function updateIncidentField(field, value) {
 }
 
 function addVictim() {
+    console.log('addVictim function called');
+
+    // Reset form
     document.getElementById('victimForm').reset();
     document.getElementById('victimId').value = '';
     document.querySelector('#victimModal .modal-title').textContent = 'Add Person';
-    const modal = new bootstrap.Modal(document.getElementById('victimModal'));
-    modal.show();
+
+    // Try to show modal with debugging
+    try {
+        const modalElement = document.getElementById('victimModal');
+        console.log('Modal element found:', modalElement);
+
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        console.log('Modal instance created:', modal);
+
+        modal.show();
+        console.log('Modal show() called');
+    } catch (error) {
+        console.error('Error showing modal:', error);
+        alert('Error opening add person modal: ' + error.message);
+    }
 }
 
 function editVictim(victimId) {
@@ -572,8 +591,24 @@ function editVictim(victimId) {
             document.getElementById('medical_notes').value = victim.medical_notes || '';
 
             document.querySelector('#victimModal .modal-title').textContent = 'Edit Person';
-            const modal = new bootstrap.Modal(document.getElementById('victimModal'));
-            modal.show();
+
+            // Try to show modal with debugging
+            try {
+                const modalElement = document.getElementById('victimModal');
+                console.log('Edit modal element found:', modalElement);
+
+                const modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                console.log('Edit modal instance created:', modal);
+
+                modal.show();
+                console.log('Edit modal show() called');
+            } catch (error) {
+                console.error('Error showing edit modal:', error);
+                alert('Error opening edit person modal: ' + error.message);
+            }
         } else {
             showAlert('danger', 'Failed to load person data');
         }
