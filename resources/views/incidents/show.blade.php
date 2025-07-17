@@ -226,7 +226,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-users me-2"></i>People Involved</h5>
-                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()" data-bs-toggle="modal" data-bs-target="#victimModal">
                         <i class="fas fa-user-plus me-2"></i>Add Person
                     </button>
                 </div>
@@ -238,8 +238,8 @@
                                     <div class="border rounded p-3">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
-                                                <h6 class="mb-1">{{ e($victim->full_name) }}</h6>
-                                                <p class="text-muted mb-1">{{ e(ucfirst($victim->involvement_type)) }}</p>
+                                                <h6 class="mb-1">{{ $victim->full_name }}</h6>
+                                                <p class="text-muted mb-1">{{ ucfirst($victim->involvement_type) }}</p>
                                                 <span class="badge
                                                     @if($victim->injury_status == 'fatal') bg-danger
                                                     @elseif($victim->injury_status == 'critical_condition') bg-warning
