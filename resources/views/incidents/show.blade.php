@@ -226,7 +226,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-users me-2"></i>People Involved</h5>
-                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()" data-bs-toggle="modal" data-bs-target="#victimModal">
+                    <button class="btn btn-outline-primary btn-sm" onclick="addVictim()">
                         <i class="fas fa-user-plus me-2"></i>Add Person
                     </button>
                 </div>
@@ -238,8 +238,8 @@
                                     <div class="border rounded p-3">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
-                                                <h6 class="mb-1">{{ $victim->full_name }}</h6>
-                                                <p class="text-muted mb-1">{{ ucfirst($victim->involvement_type) }}</p>
+                                                <h6 class="mb-1">{{ e($victim->full_name) }}</h6>
+                                                <p class="text-muted mb-1">{{ e(ucfirst($victim->involvement_type)) }}</p>
                                                 <span class="badge
                                                     @if($victim->injury_status == 'fatal') bg-danger
                                                     @elseif($victim->injury_status == 'critical_condition') bg-warning
@@ -261,7 +261,7 @@
                                             <small class="text-muted">Age: {{ $victim->age }}</small><br>
                                         @endif
                                         @if($victim->hospital_referred)
-                                            <small class="text-muted">Hospital: {{ $victim->hospital_referred }}</small>
+                                            <small class="text-muted">Hospital: {{ e($victim->hospital_referred) }}</small>
                                         @endif
                                     </div>
                                 </div>
@@ -494,6 +494,35 @@
 
 @push('scripts')
 <script>
+// Ensure Bootstrap is loaded before using modal functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Bootstrap is available
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded');
+    } else {
+        console.log('Bootstrap loaded successfully');
+    }
+    
+    // Add event listeners for modal close buttons (fallback)
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                document.body.classList.remove('modal-open');
+                
+                // Remove backdrop
+                const backdrop = document.getElementById('modalBackdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+            }
+        });
+    });
+});
+
 function updateStatus() {
     const status = document.getElementById('statusUpdate').value;
     updateIncidentField('status', status);
@@ -544,12 +573,22 @@ function addVictim() {
     document.getElementById('victimId').value = '';
     document.querySelector('#victimModal .modal-title').textContent = 'Add Person';
 
-    // Try to show modal with debugging
+    // Show modal using Bootstrap's built-in method
     try {
         const modalElement = document.getElementById('victimModal');
         console.log('Modal element found:', modalElement);
+        
+        if (!modalElement) {
+            throw new Error('Modal element not found');
+        }
 
-        const modal = new bootstrap.Modal(modalElement, {
+        // Check if Bootstrap is available
+        if (typeof bootstrap === 'undefined') {
+            throw new Error('Bootstrap is not loaded');
+        }
+
+        // Use Bootstrap's getOrCreateInstance method for better compatibility
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement, {
             backdrop: 'static',
             keyboard: false
         });
@@ -559,7 +598,25 @@ function addVictim() {
         console.log('Modal show() called');
     } catch (error) {
         console.error('Error showing modal:', error);
-        alert('Error opening add person modal: ' + error.message);
+        showErrorToast('Error opening add person modal: ' + error.message);
+        
+        // Fallback: try to show modal manually if Bootstrap fails
+        try {
+            const modalElement = document.getElementById('victimModal');
+            if (modalElement) {
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'modalBackdrop';
+                document.body.appendChild(backdrop);
+            }
+        } catch (fallbackError) {
+            console.error('Fallback modal display failed:', fallbackError);
+        }
     }
 }
 
@@ -592,12 +649,21 @@ function editVictim(victimId) {
 
             document.querySelector('#victimModal .modal-title').textContent = 'Edit Person';
 
-            // Try to show modal with debugging
+            // Show modal using Bootstrap's built-in method
             try {
                 const modalElement = document.getElementById('victimModal');
                 console.log('Edit modal element found:', modalElement);
+                
+                if (!modalElement) {
+                    throw new Error('Modal element not found');
+                }
 
-                const modal = new bootstrap.Modal(modalElement, {
+                // Check if Bootstrap is available
+                if (typeof bootstrap === 'undefined') {
+                    throw new Error('Bootstrap is not loaded');
+                }
+
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement, {
                     backdrop: 'static',
                     keyboard: false
                 });
@@ -607,15 +673,33 @@ function editVictim(victimId) {
                 console.log('Edit modal show() called');
             } catch (error) {
                 console.error('Error showing edit modal:', error);
-                alert('Error opening edit person modal: ' + error.message);
+                showErrorToast('Error opening edit person modal: ' + error.message);
+                
+                // Fallback: try to show modal manually if Bootstrap fails
+                try {
+                    const modalElement = document.getElementById('victimModal');
+                    if (modalElement) {
+                        modalElement.style.display = 'block';
+                        modalElement.classList.add('show');
+                        document.body.classList.add('modal-open');
+                        
+                        // Add backdrop
+                        const backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop fade show';
+                        backdrop.id = 'modalBackdrop';
+                        document.body.appendChild(backdrop);
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback modal display failed:', fallbackError);
+                }
             }
         } else {
-            showAlert('danger', 'Failed to load person data');
+            showErrorToast('Failed to load person data');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('danger', 'Failed to load person data');
+        showErrorToast('Failed to load person data');
     });
 }
 
@@ -700,10 +784,29 @@ function saveVictim() {
         if (data.success) {
             showSuccessToast(data.message || 'Person saved successfully');
             // Close modal and reload page
-            const modal = bootstrap.Modal.getInstance(document.getElementById('victimModal'));
-            if (modal) {
-                modal.hide();
+            try {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('victimModal'));
+                if (modal) {
+                    modal.hide();
+                } else {
+                    // Fallback close for manually shown modals
+                    const modalElement = document.getElementById('victimModal');
+                    if (modalElement) {
+                        modalElement.style.display = 'none';
+                        modalElement.classList.remove('show');
+                        document.body.classList.remove('modal-open');
+                        
+                        // Remove backdrop
+                        const backdrop = document.getElementById('modalBackdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error closing modal:', error);
             }
+            
             setTimeout(() => {
                 location.reload();
             }, 1500);
