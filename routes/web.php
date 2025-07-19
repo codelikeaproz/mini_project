@@ -215,6 +215,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'userDashboard'])->name('dashboard');
             Route::get('/profile', [UserDashboardController::class, 'profile'])->name('profile');
             Route::put('/profile', [UserDashboardController::class, 'updateProfile'])->name('profile.update');
+            
+            // Staff-specific incident routes (with /user/ prefix)
+            Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
+            Route::get('/incidents/create', [IncidentController::class, 'create'])->name('incidents.create');
+            Route::post('/incidents', [IncidentController::class, 'store'])->name('incidents.store');
+            Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+            Route::get('/incidents/{incident}/edit', [IncidentController::class, 'edit'])->name('incidents.edit');
+            Route::put('/incidents/{incident}', [IncidentController::class, 'update'])->name('incidents.update');
+            
+            // Staff-specific vehicle routes (with /user/ prefix)
+            Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+            Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+            
+            // Staff-specific victim routes (with /user/ prefix)
+            Route::get('/victims', [VictimController::class, 'index'])->name('victims.index');
+            Route::get('/victims/create', [VictimController::class, 'create'])->name('victims.create');
+            Route::post('/victims', [VictimController::class, 'store'])->name('victims.store');
+            Route::get('/victims/{victim}', [VictimController::class, 'show'])->name('victims.show');
+            Route::get('/victims/{victim}/edit', [VictimController::class, 'edit'])->name('victims.edit');
+            Route::put('/victims/{victim}', [VictimController::class, 'update'])->name('victims.update');
+            
+            // Staff-specific victim additional routes
+            Route::prefix('victims')->name('victims.')->group(function () {
+                Route::get('/incident/{incident}', [VictimController::class, 'getByIncident'])->name('by-incident');
+                Route::get('/{victim}/data', [VictimController::class, 'getVictim'])->name('get-data');
+            });
+            
+            // Staff-specific incident additional routes
+            Route::prefix('incidents')->name('incidents.')->group(function () {
+                Route::patch('/{incident}/status', [IncidentController::class, 'updateStatus'])->name('update-status');
+                Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
+                Route::patch('/{incident}/assign-staff', [IncidentController::class, 'assignStaff'])->name('assign-staff');
+                Route::patch('/{incident}/assign-vehicle', [IncidentController::class, 'assignVehicle'])->name('assign-vehicle');
+                Route::post('/{incident}/update-field', [IncidentController::class, 'updateField'])->name('update-field');
+                Route::get('/{incident}/victim-form', [IncidentController::class, 'show'])->name('victim-form');
+            });
         });
     });
 
@@ -226,72 +262,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Use combined middleware for shared resources
     Route::middleware('role:admin,mdrrmo_staff')->group(function () {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Incident Management Routes
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('incidents', IncidentController::class)->except(['destroy']);
-
-        // Admin gets destroy permission
-        Route::middleware('role:admin')->group(function () {
-            Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
-        });
-
-        // Shared incident routes for both roles
-        Route::prefix('incidents')->name('incidents.')->group(function () {
-            Route::patch('/{incident}/status', [IncidentController::class, 'updateStatus'])->name('update-status');
-            Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
-            Route::patch('/{incident}/assign-staff', [IncidentController::class, 'assignStaff'])->name('assign-staff');
-            Route::patch('/{incident}/assign-vehicle', [IncidentController::class, 'assignVehicle'])->name('assign-vehicle');
-            Route::post('/{incident}/update-field', [IncidentController::class, 'updateField'])->name('update-field');
-        });
-
-                /*
-        |--------------------------------------------------------------------------
-        | Vehicle Management Routes
-        |--------------------------------------------------------------------------
-        */
-        // Admin-only vehicle management routes (specific routes first)
-        Route::middleware('role:admin')->group(function () {
-            Route::get('/vehicles/create', [VehicleController::class, 'create'])->name('vehicles.create');
-            Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
-            Route::get('/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
-            Route::put('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
-            Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
-
-            Route::prefix('vehicles')->name('vehicles.')->group(function () {
-                Route::patch('/{vehicle}/status', [VehicleController::class, 'updateStatus'])->name('update-status');
-                Route::patch('/{vehicle}/fuel', [VehicleController::class, 'updateFuel'])->name('update-fuel');
-                Route::patch('/{vehicle}/schedule-maintenance', [VehicleController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
-                Route::patch('/{vehicle}/complete-maintenance', [VehicleController::class, 'completeMaintenance'])->name('complete-maintenance');
-            });
-        });
-
-        // Vehicle viewing routes (both admin and staff) - parameterized routes last
-        Route::middleware('role:admin,mdrrmo_staff')->group(function () {
-            Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
-            Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Victim Management Routes
-        |--------------------------------------------------------------------------
-        */
-        Route::resource('victims', VictimController::class)->except(['destroy']);
-
-        // Admin gets destroy permission
-        Route::middleware('role:admin')->group(function () {
-            Route::delete('/victims/{victim}', [VictimController::class, 'destroy'])->name('victims.destroy');
-        });
-
-        // Shared victim routes
-        Route::prefix('victims')->name('victims.')->group(function () {
-            Route::get('/incident/{incident}', [VictimController::class, 'getByIncident'])->name('by-incident');
-            Route::get('/{victim}/data', [VictimController::class, 'getVictim'])->name('get-data');
-        });
 
         /*
         |--------------------------------------------------------------------------
@@ -364,6 +334,73 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/chart-data', [DashboardController::class, 'getChartData'])->name('charts');
         });
 
+        // Vehicle viewing routes (both admin and staff) - parameterized routes last
+        Route::middleware('role:admin,mdrrmo_staff')->group(function () {
+            Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+            Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+        });
+
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Only Routes (Without /user/ prefix)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Incident Management Routes (Admin access without /user/ prefix)
+        |--------------------------------------------------------------------------
+        */
+        // Admin-only incident routes (without /user/ prefix)
+        Route::resource('incidents', IncidentController::class)->except(['destroy']);
+        Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
+
+        // Shared incident routes for both roles (admin access)
+        Route::prefix('incidents')->name('incidents.')->group(function () {
+            Route::patch('/{incident}/status', [IncidentController::class, 'updateStatus'])->name('update-status');
+            Route::post('/{incident}/assign', [IncidentController::class, 'assign'])->name('assign');
+            Route::patch('/{incident}/assign-staff', [IncidentController::class, 'assignStaff'])->name('assign-staff');
+            Route::patch('/{incident}/assign-vehicle', [IncidentController::class, 'assignVehicle'])->name('assign-vehicle');
+            Route::post('/{incident}/update-field', [IncidentController::class, 'updateField'])->name('update-field');
+            Route::get('/{incident}/victim-form', [IncidentController::class, 'show'])->name('victim-form');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vehicle Management Routes
+        |--------------------------------------------------------------------------
+        */
+        // Admin-only vehicle management routes (specific routes first)
+        Route::get('/vehicles/create', [VehicleController::class, 'create'])->name('vehicles.create');
+        Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+        Route::get('/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
+        Route::put('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+        Route::prefix('vehicles')->name('vehicles.')->group(function () {
+            Route::patch('/{vehicle}/status', [VehicleController::class, 'updateStatus'])->name('update-status');
+            Route::patch('/{vehicle}/fuel', [VehicleController::class, 'updateFuel'])->name('update-fuel');
+            Route::patch('/{vehicle}/schedule-maintenance', [VehicleController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
+            Route::patch('/{vehicle}/complete-maintenance', [VehicleController::class, 'completeMaintenance'])->name('complete-maintenance');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Victim Management Routes (Admin access without /user/ prefix)
+        |--------------------------------------------------------------------------
+        */
+        // Admin-only victim routes (without /user/ prefix)
+        Route::resource('victims', VictimController::class)->except(['destroy']);
+        Route::delete('/victims/{victim}', [VictimController::class, 'destroy'])->name('victims.destroy');
+
+        // Shared victim routes (admin access)
+        Route::prefix('victims')->name('victims.')->group(function () {
+            Route::get('/incident/{incident}', [VictimController::class, 'getByIncident'])->name('by-incident');
+            Route::get('/{victim}/data', [VictimController::class, 'getVictim'])->name('get-data');
+        });
     });
 
 });
