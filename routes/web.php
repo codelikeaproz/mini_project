@@ -75,6 +75,9 @@ Route::middleware('auth')->group(function () {
             'id' => $user->id,
             'email' => $user->email,
             'role' => $user->role,
+            'role_quoted' => "'{$user->role}'",
+            'role_length' => strlen($user->role),
+            'role_hex' => bin2hex($user->role),
             'is_verified' => $user->is_verified,
             'is_active' => $user->is_active,
             'hasVerifiedEmail' => $user->hasVerifiedEmail(),
@@ -119,6 +122,29 @@ Route::middleware('auth')->group(function () {
             'user_role' => $user->role,
             'available_routes' => $routes,
             'expected_access' => 'All routes should work for mdrrmo_staff'
+        ];
+    });
+
+    // Fix role if it's incorrect (temporary route)
+    Route::get('/fix-role', function () {
+        $user = auth()->user();
+        $oldRole = $user->role;
+        
+        // Fix common typos
+        if ($user->role === 'mddrmo_staff') {
+            $user->update(['role' => 'mdrrmo_staff']);
+            return [
+                'message' => 'Role fixed!',
+                'old_role' => $oldRole,
+                'new_role' => $user->role,
+                'status' => 'success'
+            ];
+        }
+        
+        return [
+            'message' => 'Role is already correct',
+            'current_role' => $user->role,
+            'status' => 'no_change_needed'
         ];
     });
 });
